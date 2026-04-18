@@ -67,15 +67,29 @@ let perkShowPrivate = false;
 let cardShares: number[] = [];
 let cardChallenge = 0;
 
-function setTheme(theme: 'dark' | 'light'): void {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('cv-theme', theme);
-  render();
-}
-
 function getTheme(): 'dark' | 'light' {
   const current = document.documentElement.getAttribute('data-theme');
   return current === 'light' ? 'light' : 'dark';
+}
+
+function syncThemeToggleButton(button: HTMLButtonElement, theme: 'dark' | 'light'): void {
+  if (theme === 'dark') {
+    button.textContent = '🌙';
+    button.setAttribute('aria-label', 'Switch to light mode');
+  } else {
+    button.textContent = '☀️';
+    button.setAttribute('aria-label', 'Switch to dark mode');
+  }
+}
+
+function attachThemeToggle(button: HTMLButtonElement): void {
+  syncThemeToggleButton(button, getTheme());
+  button.addEventListener('click', () => {
+    const nextTheme = getTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    localStorage.setItem('theme', nextTheme);
+    syncThemeToggleButton(button, nextTheme);
+  });
 }
 
 function randomInt(maxExclusive: number): number {
@@ -236,7 +250,6 @@ function renderPartyCards(): string {
 }
 
 function render(): void {
-  const theme = getTheme();
   const size = estimateSignatureSize(perkParams);
   const perkEquation = perkKeypair
     ? perkEquationHolds(perkKeypair.publicKey, perkKeypair.privateKey.pi, perkParams.q)
@@ -251,9 +264,7 @@ function render(): void {
   app.innerHTML = `
     <header class="topbar">
       <h1>Signing In Your Head</h1>
-      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark light theme">${
-        theme === 'dark' ? '☀️ Light' : '🌙 Dark'
-      }</button>
+      <button id="theme-toggle" class="theme-toggle" type="button" style="position: absolute; top: 0; right: 0"></button>
     </header>
 
     <main class="layout">
@@ -394,15 +405,12 @@ Verifier recomputes e and checks consistency</pre>
       </section>
     </main>
 
-    <footer>
-      <p>"Whether therefore ye eat, or drink, or whatsoever ye do, do all to the glory of God." — 1 Corinthians 10:31</p>
-    </footer>
   `;
 
   const themeToggle = document.querySelector<HTMLButtonElement>('#theme-toggle');
-  themeToggle?.addEventListener('click', () => {
-    setTheme(getTheme() === 'dark' ? 'light' : 'dark');
-  });
+  if (themeToggle) {
+    attachThemeToggle(themeToggle);
+  }
 
   const cardBtn = document.querySelector<HTMLButtonElement>('#reshuffle-cards');
   cardBtn?.addEventListener('click', () => {
