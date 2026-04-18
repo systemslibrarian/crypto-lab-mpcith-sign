@@ -2,47 +2,54 @@
 
 ## What It Is
 
-Browser-based demo of MPC-in-the-Head (MPCitH) signatures - the post-quantum
-signature paradigm where security rests only on hash functions. The prover
-simulates a multi-party computation internally, commits to each party's view,
-then uses Fiat-Shamir to turn the interactive zero-knowledge proof into a
-non-interactive signature.
-
-This project implements a full toy MPCitH protocol for proving knowledge of
-x such that A*x = b (mod q), with SHA-256 challenge derivation and real
-secret sharing, commitments, challenge-response, and verification checks.
-It also includes a toy PERK-style instantiation based on the Permuted Kernel
-Problem and explains NIST's Round 2 additional MPCitH candidates: Mirath,
-PERK, RYDE, SDitH, MQOM, and FAEST.
-
-None of these Round 2 additional candidates are standardized as of 2026.
+This demo implements MPC-in-the-Head signatures using additive secret sharing,
+SHA-256 commitments, Merkle proofs, and the Fiat-Shamir transform for
+non-interactive signing. It demonstrates a toy linear relation proof for
+knowledge of a witness x where A*x = b (mod q), plus a toy PERK-style
+permutation witness flow. The algorithm family is post-quantum and
+zero-knowledge oriented, with signature security tied to hash commitments and
+the hardness of the underlying statement relation. It is an educational model,
+not a production cryptographic implementation.
 
 ## When to Use It
 
-- Understanding why NIST sought non-lattice signature alternatives
-- Learning how Fiat-Shamir turns interaction into signatures
-- Comparing MPCitH tradeoffs with ML-DSA and SLH-DSA
-- Teaching the MPC simulation paradigm (IKOS 2007)
+- Teaching how interactive identification becomes signatures with Fiat-Shamir.
+  This demo exposes commit, challenge, and response artifacts directly.
+- Explaining additive secret sharing and all-but-one view opening in MPCitH.
+  The party cards show shares, local outputs, commitments, and hidden-view flow.
+- Comparing assumption diversity against lattice-based signatures.
+  The exhibits contrast MPCitH tradeoffs such as larger signatures.
+- Prototyping UI-level understanding of toy PERK-style permutation witnesses.
+  It shows relation checks and verification outcomes in browser-only TypeScript.
+- Not for production key management or compliance claims.
+  Toy parameters and educational code are not suitable for deployment security.
 
 ## Live Demo
 
 https://systemslibrarian.github.io/crypto-lab-mpcith-sign/
 
-## What Can Go Wrong
+The live app lets you split a secret into shares, run simulated party views,
+issue a challenge, and verify revealed views in an MPCitH-style round. You can
+also run Fiat-Shamir signing traces and a toy PERK sign/verify flow while
+adjusting controls such as party count N and field prime q.
 
-- MPCitH signatures are larger than ML-DSA (thousands of bytes vs hundreds).
-  This is a core tradeoff, not just an implementation detail.
-- Demo parameters (N=8, tau=4, small vectors and fields) are toy security only.
-- Round 2 additional candidates are under active cryptanalysis and may or may
-  not survive to standardization.
-- This toy PERK exhibit is educational and intentionally small.
+## How to Run Locally
 
-## Real-World Usage
+```bash
+git clone https://github.com/systemslibrarian/crypto-lab-mpcith-sign
+cd crypto-lab-mpcith-sign
+npm install
+npm run dev
+```
 
-MPCitH was introduced by Ishai, Kushilevitz, Ostrovsky, and Sahai (2007).
-The Picnic signature scheme demonstrated practical MPCitH signing in the NIST
-PQC process.
+No environment variables are required.
 
-NIST's additional signature process includes non-lattice options to increase
-assumption diversity. MPCitH candidates are attractive because they avoid
-lattice structure while still yielding practical signatures, at larger sizes.
+## Part of the Crypto-Lab Suite
+
+One of 60+ live browser demos at
+[systemslibrarian.github.io/crypto-lab](https://systemslibrarian.github.io/crypto-lab/)
+- spanning Atbash (600 BCE) through NIST FIPS 203/204/205 (2024).
+
+---
+
+*"Whether you eat or drink, or whatever you do, do all to the glory of God." — 1 Corinthians 10:31*
