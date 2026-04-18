@@ -251,7 +251,7 @@ function render(): void {
   app.innerHTML = `
     <header class="topbar">
       <h1>Signing In Your Head</h1>
-      <button id="theme-toggle" class="theme-toggle" type="button">${
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark light theme">${
         theme === 'dark' ? '☀️ Light' : '🌙 Dark'
       }</button>
     </header>
@@ -276,7 +276,7 @@ function render(): void {
               Cheating soundness: one round $1/N$, with repetitions $\tau$ gives $\left(1/N\right)^\tau$.
             </p>
           </div>
-          <button id="reshuffle-cards" type="button">Reshuffle Shares</button>
+          <button id="reshuffle-cards" type="button" aria-label="Reshuffle three-card secret shares">Reshuffle Shares</button>
         </div>
       </section>
 
@@ -297,10 +297,10 @@ function render(): void {
           </label>
         </div>
         <div class="button-row">
-          <button id="split-secret" type="button">Split Secret</button>
-          <button id="run-mpc" type="button">Run MPC</button>
-          <button id="run-challenge" type="button">Challenge</button>
-          <button id="run-verify" type="button">Verify</button>
+          <button id="split-secret" type="button" aria-label="Split secret into party shares">Split Secret</button>
+          <button id="run-mpc" type="button" aria-label="Run MPC round">Run MPC</button>
+          <button id="run-challenge" type="button" aria-label="Select hidden party challenge">Challenge</button>
+          <button id="run-verify" type="button" aria-label="Verify revealed party views">Verify</button>
         </div>
         <p id="challenge-live" aria-live="polite" class="challenge-live"></p>
         <div class="challenge-arrow">⇢ Challenge picks one hidden party</div>
@@ -316,8 +316,8 @@ function render(): void {
           <input id="fs-message" value="${fsMessage}" />
         </label>
         <div class="button-row">
-          <button id="run-fs" type="button">Run Fiat-Shamir</button>
-          <button id="tamper-fs" type="button">Modify Message</button>
+          <button id="run-fs" type="button" aria-label="Run Fiat Shamir signature derivation">Run Fiat-Shamir</button>
+          <button id="tamper-fs" type="button" aria-label="Modify message and recompute challenge">Modify Message</button>
         </div>
         <div class="columns">
           <div>
@@ -344,10 +344,10 @@ Verifier recomputes e and checks consistency</pre>
           This demo uses tiny parameters for visibility.
         </p>
         <div class="button-row">
-          <button id="perk-keygen" type="button">Generate PERK Keypair</button>
-          <button id="perk-sign" type="button">Sign</button>
-          <button id="perk-verify" type="button">Verify</button>
-          <button id="perk-reveal" type="button">${perkShowPrivate ? 'Hide π' : 'Reveal π'}</button>
+          <button id="perk-keygen" type="button" aria-label="Generate toy PERK keypair">Generate PERK Keypair</button>
+          <button id="perk-sign" type="button" aria-label="Sign message with toy PERK">Sign</button>
+          <button id="perk-verify" type="button" aria-label="Verify toy PERK signature">Verify</button>
+          <button id="perk-reveal" type="button" aria-label="Toggle visibility of private permutation">${perkShowPrivate ? 'Hide π' : 'Reveal π'}</button>
         </div>
         <label>Message
           <input id="perk-message" value="${perkMessage}" />
