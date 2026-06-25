@@ -26,9 +26,18 @@
   --bg-panel-alt: rgba(231, 247, 250, 0.95);
   --bg-card: #ffffff;
   --text-main: #0f2f3a;
-  --text-soft: #325d6d;
-  --border: #8ab0bf;
+  --text-soft: #2c5462;
+  --border: #6f9aab;
   --focus: #035a79;
+
+  /* Light theme needs darker accents — the neon dark-theme values fail WCAG
+     contrast on a near-white background. These all clear 4.5:1 on #fff. */
+  --party-active: #0a6f93;
+  --party-hidden: #b00f30;
+  --commit: #0a7a3d;
+  --challenge: #8a6500;
+  --ok: #0a7a3d;
+  --bad: #b00f30;
 }
 
 * {
@@ -194,13 +203,41 @@ select {
   margin-bottom: 0.7rem;
 }
 
-.challenge-live {
-  min-height: 1.1rem;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -3rem;
+  z-index: 1100;
+  padding: 0.55rem 0.9rem;
+  border-radius: 0 0 10px 10px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--focus);
+  text-decoration: none;
+  transition: top 150ms ease;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .challenge-arrow {
   color: var(--challenge);
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.5rem;
   font-weight: 600;
 }
 
@@ -232,9 +269,34 @@ select {
   background: linear-gradient(180deg, rgba(255, 51, 102, 0.15), var(--bg-card));
 }
 
-.party-card [role="code"] {
+.party-card p {
+  margin: 0.3rem 0;
+  overflow-wrap: anywhere;
+}
+
+.party-card code.commitment {
   font-family: var(--font-mono);
   color: var(--commit);
+  word-break: break-all;
+}
+
+.math {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  color: var(--text-main);
+}
+
+.tagline {
+  margin: 0.25rem 0 0;
+  color: var(--text-soft);
+  font-size: clamp(0.85rem, 1.4vw, 1rem);
+  max-width: 60ch;
+}
+
+.verify-result {
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 .status {
@@ -267,10 +329,19 @@ pre {
   max-height: 260px;
 }
 
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.92rem;
+}
+
+caption {
+  text-align: left;
 }
 
 th,
@@ -278,6 +349,11 @@ td {
   border-bottom: 1px solid var(--border);
   padding: 0.45rem;
   text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  font-weight: 700;
 }
 
 .ok {
@@ -318,13 +394,38 @@ td {
 }
 
 @media (max-width: 640px) {
+  #app {
+    padding: 0.75rem;
+  }
+
   .columns {
     grid-template-columns: 1fr;
   }
 
+  /* Two even columns that always fit the viewport — no horizontal scroll. */
   .party-grid {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-    overflow-x: auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card-game {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .card-game button {
+    width: 100%;
+  }
+
+  /* Comfortable touch targets on small screens (WCAG 2.5.8). */
+  .button-row button {
+    flex: 1 1 auto;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  .party-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -336,5 +437,17 @@ td {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Honor users who ask for less motion (WCAG 2.3.3 / 2.2). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -44,6 +44,14 @@ npm run dev
 
 No environment variables are required.
 
+Run the cryptographic test suite (also gated in CI before every deploy):
+
+```bash
+npm test
+```
+
+See [VERIFICATION.md](VERIFICATION.md) for the invariants each test enforces.
+
 ## Part of the Crypto-Lab Suite
 
 One of 60+ live browser demos at

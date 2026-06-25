@@ -10,9 +10,24 @@
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>crypto-lab-mpcith-sign</title>
+    <meta name="color-scheme" content="dark light" />
+    <title>Signing in Your Head — MPC-in-the-Head Signatures | Crypto Lab</title>
+    <meta
+      name="description"
+      content="An educational, browser-only demo of MPC-in-the-Head signatures: additive secret sharing, SHA-256 commitments, Merkle proofs, the Fiat-Shamir transform, and a toy PERK scheme."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Signing in Your Head — MPC-in-the-Head Signatures" />
+    <meta
+      property="og:description"
+      content="Split a secret into shares, run all-but-one party openings, and trace Fiat-Shamir signing — entirely in the browser."
+    />
+    <meta property="og:url" content="https://systemslibrarian.github.io/crypto-lab-mpcith-sign/" />
+    <meta name="twitter:card" content="summary" />
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div id="sr-live" class="sr-only" role="status" aria-live="polite"></div>
 <!-- BEGIN crypto-lab shared header — managed; edit shared-header.html + re-run reapply-header.py
      Identical on every lab. Self-contained styles. Accents use each demo's own
      --accent CSS variable (teal #35d6bb fallback). The ONLY per-repo value is the

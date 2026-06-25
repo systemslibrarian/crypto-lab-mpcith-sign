@@ -3,9 +3,11 @@ import {
   bytesToHex,
   commit,
   hexToBytes,
+  merkleProof,
   partialReconstruct,
   reconstructSecret,
   shareSecret,
+  verifyMerkleProof,
 } from './sharing';
 import { generateStatement, mpcRound, sign, type MPCParams, type Statement } from './mpcith';
 import {
@@ -25,6 +27,23 @@ if (!appRoot) {
 const app = appRoot;
 
 const encoder = new TextEncoder();
+
+/**
+ * Push a message to the persistent screen-reader live region declared in
+ * index.html. It lives outside #app so it survives the full re-render and can
+ * reliably announce status changes (WCAG 4.1.3 Status Messages).
+ */
+function announce(message: string): void {
+  const live = document.getElementById('sr-live');
+  if (!live) {
+    return;
+  }
+  // Clearing first guarantees identical consecutive messages re-announce.
+  live.textContent = '';
+  window.setTimeout(() => {
+    live.textContent = message;
+  }, 50);
+}
 
 interface Exhibit2State {
   secretHex: string;
@@ -116,6 +135,31 @@ function mod(x: number, q: number): number {
   return r < 0 ? r + q : r;
 }
 
+function matVec(A: number[][], x: number[], q: number): number[] {
+  return A.map((row) => {
+    let acc = 0;
+    for (let i = 0; i < row.length; i += 1) {
+      acc = mod(acc + row[i] * x[i], q);
+    }
+    return acc;
+  });
+}
+
+function vecEqual(a: number[], b: number[]): boolean {
+  return a.length === b.length && a.every((value, i) => value === b[i]);
+}
+
+/**
+ * Changing N or q invalidates any previously committed round (its party count
+ * and field no longer match the controls). Clear it so a later Challenge/Verify
+ * can never index past the stale arrays.
+ */
+function resetExhibit2Round(message: string): void {
+  exhibit2State.round = null;
+  exhibit2State.hiddenParty = null;
+  exhibit2State.verificationText = message;
+}
+
 async function splitSecretStep(): Promise<void> {
   const secret = hexToBytes(exhibit2State.secretHex);
   if (secret.length === 0) {
@@ -146,39 +190,63 @@ function challengeStep(): void {
     return;
   }
   exhibit2State.hiddenParty = randomInt(exhibit2State.N);
-  const live = document.querySelector<HTMLElement>('#challenge-live');
-  if (live) {
-    live.textContent = `Challenge selected: hide party ${exhibit2State.hiddenParty + 1}.`;
-  }
   exhibit2State.verificationText = `Challenge set: party ${exhibit2State.hiddenParty + 1} is hidden.`;
+  announce(`Challenge selected. Party ${exhibit2State.hiddenParty + 1} is now hidden.`);
 }
 
 async function verifyStep(): Promise<void> {
-  if (!exhibit2State.round || !exhibit2State.statement || exhibit2State.hiddenParty === null) {
+  const round = exhibit2State.round;
+  const statement = exhibit2State.statement;
+  const hidden = exhibit2State.hiddenParty;
+  if (!round || !statement || hidden === null) {
     exhibit2State.verificationText = 'Split, run MPC, and challenge first.';
     return;
   }
 
-  const revealedOutputs = exhibit2State.round.partyOutputs.filter(
-    (_v, i) => i !== exhibit2State.hiddenParty,
-  );
-  const summed = new Array<number>(exhibit2State.statement.b.length).fill(0);
-  for (const out of revealedOutputs) {
-    for (let i = 0; i < out.length; i += 1) {
-      summed[i] = mod(summed[i] + out[i], exhibit2State.q);
+  const q = exhibit2State.q;
+  const summed = new Array<number>(statement.b.length).fill(0);
+  let checked = 0;
+
+  // All-but-one opening: the verifier checks every revealed view three ways,
+  // then derives the one hidden party's output from the public target b.
+  for (let i = 0; i < exhibit2State.N; i += 1) {
+    if (i === hidden) {
+      continue;
     }
+    const view = round.views[i];
+
+    // 1. Local consistency — the revealed output must equal A · share (mod q).
+    if (!vecEqual(matVec(statement.A, view.share, q), view.output)) {
+      exhibit2State.verificationText = `Verifier rejected: party ${i + 1} output ≠ A·share.`;
+      return;
+    }
+
+    // 2. Commitment binding — re-commit share‖output under the revealed salt.
+    const serialized = Uint8Array.from([...view.share, ...view.output]);
+    const recommit = await commit(serialized, view.salt);
+    if (bytesToHex(recommit.commitment) !== bytesToHex(round.commitments[i])) {
+      exhibit2State.verificationText = `Verifier rejected: party ${i + 1} commitment mismatch.`;
+      return;
+    }
+
+    // 3. Merkle membership — the commitment must be a leaf of the published root.
+    const proof = await merkleProof(round.commitments, i);
+    const inRoot = await verifyMerkleProof(round.commitments[i], i, proof.proof, round.merkleRoot);
+    if (!inRoot) {
+      exhibit2State.verificationText = `Verifier rejected: party ${i + 1} not under Merkle root.`;
+      return;
+    }
+
+    for (let j = 0; j < summed.length; j += 1) {
+      summed[j] = mod(summed[j] + view.output[j], q);
+    }
+    checked += 1;
   }
-  const implied = exhibit2State.statement.b.map((value, i) => mod(value - summed[i], exhibit2State.q));
 
-  const sampleIndex = (exhibit2State.hiddenParty + 1) % exhibit2State.N;
-  const reveal = exhibit2State.round.views[sampleIndex];
-  const serialized = Uint8Array.from([...reveal.share, ...reveal.output]);
-  const checked = await commit(serialized, reveal.salt);
-  const commitmentOk = bytesToHex(checked.commitment) === bytesToHex(exhibit2State.round.commitments[sampleIndex]);
-
-  exhibit2State.verificationText = commitmentOk
-    ? `Verifier accepted revealed views. Implied hidden output: [${implied.join(', ')}].`
-    : 'Verifier rejected: commitment mismatch.';
+  const implied = statement.b.map((value, i) => mod(value - summed[i], q));
+  exhibit2State.verificationText =
+    `Verifier accepted all ${checked} revealed views — each commitment binds (SHA-256), sits under the Merkle root, ` +
+    `and satisfies output = A·share. Implied hidden party ${hidden + 1} output (b − Σ revealed): [${implied.join(', ')}].`;
 }
 
 async function runFiatShamirDemo(): Promise<void> {
@@ -224,12 +292,11 @@ function renderPartyCards(): string {
   for (let i = 0; i < exhibit2State.N; i += 1) {
     const isHidden = exhibit2State.hiddenParty === i;
     const view = exhibit2State.round?.views[i];
+    const commitment = exhibit2State.round?.commitments[i];
     const shareText = exhibit2State.shares[i] ? bytesToHex(exhibit2State.shares[i]) : 'pending';
     const outputText = view ? `[${view.output.join(', ')}]` : 'pending';
     const saltText = view ? `${bytesToHex(view.salt).slice(0, 8)}...` : 'pending';
-    const commitmentText = exhibit2State.round
-      ? `${bytesToHex(exhibit2State.round.commitments[i]).slice(0, 12)}...`
-      : 'pending';
+    const commitmentText = commitment ? `${bytesToHex(commitment).slice(0, 12)}...` : 'pending';
     const label = isHidden ? 'HIDDEN' : 'ACTIVE';
     cards.push(`
       <article
@@ -241,7 +308,7 @@ function renderPartyCards(): string {
         <p><strong>Share:</strong> ${shareText}</p>
         <p><strong>My output:</strong> ${outputText}</p>
         <p><strong>Salt:</strong> ${saltText}</p>
-        <p><strong>Commitment:</strong> <span role="code" aria-label="Commitment hash for party ${i + 1}">${commitmentText}</span></p>
+        <p><strong>Commitment:</strong> <code class="commitment" aria-label="Commitment hash for party ${i + 1}">${commitmentText}</code></p>
         <p class="status">Status: ● ${label}</p>
       </article>
     `);
@@ -250,6 +317,21 @@ function renderPartyCards(): string {
 }
 
 function render(): void {
+  // The whole #app is replaced on each render, which would drop keyboard focus
+  // (e.g. mid-drag on the N slider). Capture the focused control and its caret
+  // so we can restore them after the DOM is rebuilt (WCAG 2.4.3 Focus Order).
+  const previousId =
+    document.activeElement instanceof HTMLElement ? document.activeElement.id : '';
+  let caret: number | null = null;
+  try {
+    const active = document.activeElement;
+    if (active instanceof HTMLInputElement && active.type !== 'range') {
+      caret = active.selectionStart;
+    }
+  } catch {
+    caret = null;
+  }
+
   const size = estimateSignatureSize(perkParams);
   const perkEquation = perkKeypair
     ? perkEquationHolds(perkKeypair.publicKey, perkKeypair.privateKey.pi, perkParams.q)
@@ -262,12 +344,15 @@ function render(): void {
   const hiddenName = ['A', 'B', 'C'][cardChallenge] ?? 'A';
 
   app.innerHTML = `
-    <header class="topbar">
-      <h1>Signing In Your Head</h1>
+    <div class="topbar">
+      <div>
+        <h1>Signing in Your Head</h1>
+        <p class="tagline">MPC-in-the-Head signatures, built up from a three-card trick to a toy PERK scheme.</p>
+      </div>
       <button id="theme-toggle" class="theme-toggle" type="button" style="position: absolute; top: 0; right: 0"></button>
-    </header>
+    </div>
 
-    <main class="layout">
+    <main class="layout" id="main" tabindex="-1">
       <section class="panel">
         <h2>Exhibit 1 — The Idea</h2>
         <p>
@@ -284,7 +369,10 @@ function render(): void {
             <p>Party C: ${cardC}</p>
             <p>Challenge: hide Party ${hiddenName}</p>
             <p>
-              Cheating soundness: one round $1/N$, with repetitions $\tau$ gives $\left(1/N\right)^\tau$.
+              Cheating soundness: a single round catches a cheat with probability
+              <span class="math">1&nbsp;&minus;&nbsp;1/N</span>; over
+              <span class="math">&tau;</span> independent rounds a cheat slips through with only
+              <span class="math">(1/N)<sup>&tau;</sup></span>.
             </p>
           </div>
           <button id="reshuffle-cards" type="button" aria-label="Reshuffle three-card secret shares">Reshuffle Shares</button>
@@ -313,12 +401,11 @@ function render(): void {
           <button id="run-challenge" type="button" aria-label="Select hidden party challenge">Challenge</button>
           <button id="run-verify" type="button" aria-label="Verify revealed party views">Verify</button>
         </div>
-        <p id="challenge-live" aria-live="polite" class="challenge-live"></p>
-        <div class="challenge-arrow">⇢ Challenge picks one hidden party</div>
+        <p class="challenge-arrow">⇢ Challenge picks one hidden party</p>
         <div class="party-grid">
           ${renderPartyCards()}
         </div>
-        <p>${exhibit2State.verificationText}</p>
+        <p class="verify-result" role="status" aria-live="polite">${exhibit2State.verificationText}</p>
       </section>
 
       <section class="panel">
@@ -351,7 +438,8 @@ Verifier recomputes e and checks consistency</pre>
       <section class="panel">
         <h2>Exhibit 4 — Toy PERK</h2>
         <p>
-          Toy PERK relation: find permutation $\pi$ such that $H \cdot \pi(y) = b \mod q$.
+          Toy PERK relation: find a permutation <span class="math">&pi;</span> such that
+          <span class="math">H&nbsp;&middot;&nbsp;&pi;(y)&nbsp;=&nbsp;b&nbsp;(mod&nbsp;q)</span>.
           This demo uses tiny parameters for visibility.
         </p>
         <div class="button-row">
@@ -364,7 +452,7 @@ Verifier recomputes e and checks consistency</pre>
           <input id="perk-message" value="${perkMessage}" />
         </label>
         <p>Signature status: <strong class="${perkVerifyText.includes('VALID') ? 'ok' : 'bad'}">${perkVerifyText}</strong></p>
-        <p>Key equation check $H \cdot \pi(y)=b$: ${perkEquation ? '✓' : 'pending'}</p>
+        <p>Key equation check <span class="math">H&nbsp;&middot;&nbsp;&pi;(y)&nbsp;=&nbsp;b</span>: ${perkEquation ? '✓ holds' : 'pending'}</p>
         <p>Estimated signature size: ~${size.bytes} bytes</p>
         <pre>${JSON.stringify(size.breakdown, null, 2)}</pre>
         <pre>${
@@ -382,18 +470,21 @@ Verifier recomputes e and checks consistency</pre>
           NIST Round 2 additional signatures include Mirath, PERK, RYDE, SDitH, MQOM, and FAEST.
           None are standardized as of 2026. They are under active cryptanalysis.
         </p>
-        <table>
-          <thead>
-            <tr><th>Scheme</th><th>Sig size</th><th>Security basis</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>ML-DSA-2</td><td>2,420 B</td><td>Lattice</td></tr>
-            <tr><td>SLH-DSA-128s</td><td>7,856 B</td><td>Hash</td></tr>
-            <tr><td>PERK-I (est.)</td><td>~6,000 B</td><td>Hash + PKP</td></tr>
-            <tr><td>Mirath-I (est.)</td><td>~5,700 B</td><td>Hash + MinRank</td></tr>
-            <tr><td>FAEST-I (est.)</td><td>~5,700 B</td><td>Hash + AES</td></tr>
-          </tbody>
-        </table>
+        <div class="table-wrap">
+          <table>
+            <caption class="sr-only">Signature size and security basis by scheme</caption>
+            <thead>
+              <tr><th scope="col">Scheme</th><th scope="col">Sig size</th><th scope="col">Security basis</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>ML-DSA-2</td><td>2,420 B</td><td>Lattice</td></tr>
+              <tr><td>SLH-DSA-128s</td><td>7,856 B</td><td>Hash</td></tr>
+              <tr><td>PERK-I (est.)</td><td>~6,000 B</td><td>Hash + PKP</td></tr>
+              <tr><td>Mirath-I (est.)</td><td>~5,700 B</td><td>Hash + MinRank</td></tr>
+              <tr><td>FAEST-I (est.)</td><td>~5,700 B</td><td>Hash + AES</td></tr>
+            </tbody>
+          </table>
+        </div>
         <p>
           Tradeoff: MPCitH signatures are generally larger than ML-DSA, but avoid lattice structure and
           rely on hash commitments plus hard combinatorial statements.
@@ -426,12 +517,17 @@ Verifier recomputes e and checks consistency</pre>
   const slider = document.querySelector<HTMLInputElement>('#n-slider');
   slider?.addEventListener('input', () => {
     exhibit2State.N = Number.parseInt(slider.value, 10);
+    if (exhibit2State.round) {
+      resetExhibit2Round('Party count changed. Run MPC again.');
+    }
     render();
   });
 
   const qSelect = document.querySelector<HTMLSelectElement>('#q-select');
   qSelect?.addEventListener('change', () => {
     exhibit2State.q = Number.parseInt(qSelect.value, 10);
+    resetExhibit2Round('Field q changed. Run MPC again.');
+    render();
   });
 
   const splitBtn = document.querySelector<HTMLButtonElement>('#split-secret');
@@ -444,12 +540,14 @@ Verifier recomputes e and checks consistency</pre>
     } catch (error) {
       exhibit2State.verificationText = error instanceof Error ? error.message : 'Split error';
     }
+    announce(exhibit2State.verificationText);
     render();
   });
 
   const runMpcBtn = document.querySelector<HTMLButtonElement>('#run-mpc');
   runMpcBtn?.addEventListener('click', async () => {
     await runMPCStep();
+    announce(exhibit2State.verificationText);
     render();
   });
 
@@ -462,6 +560,7 @@ Verifier recomputes e and checks consistency</pre>
   const verifyBtn = document.querySelector<HTMLButtonElement>('#run-verify');
   verifyBtn?.addEventListener('click', async () => {
     await verifyStep();
+    announce(exhibit2State.verificationText);
     render();
   });
 
@@ -497,12 +596,14 @@ Verifier recomputes e and checks consistency</pre>
   const perkSignBtn = document.querySelector<HTMLButtonElement>('#perk-sign');
   perkSignBtn?.addEventListener('click', async () => {
     await runPerkSign();
+    announce(`Toy PERK: ${perkVerifyText}`);
     render();
   });
 
   const perkVerifyBtn = document.querySelector<HTMLButtonElement>('#perk-verify');
   perkVerifyBtn?.addEventListener('click', async () => {
     await runPerkVerify();
+    announce(`Toy PERK: ${perkVerifyText}`);
     render();
   });
 
@@ -511,6 +612,22 @@ Verifier recomputes e and checks consistency</pre>
     perkShowPrivate = !perkShowPrivate;
     render();
   });
+
+  // Restore keyboard focus (and caret) to whatever control was active before
+  // the DOM was rebuilt, so re-renders don't strand keyboard/AT users.
+  if (previousId) {
+    const restored = document.getElementById(previousId);
+    if (restored instanceof HTMLElement) {
+      restored.focus();
+      if (caret !== null && restored instanceof HTMLInputElement) {
+        try {
+          restored.setSelectionRange(caret, caret);
+        } catch {
+          /* control does not support text selection */
+        }
+      }
+    }
+  }
 }
 
 xorThreeCardGame(42);
