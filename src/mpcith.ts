@@ -160,7 +160,7 @@ function serializeViewShareOutput(share: number[], output: number[]): Uint8Array
 async function sha256(data: Uint8Array): Promise<Uint8Array> {
   const copy = new Uint8Array(data.length);
   copy.set(data);
-  const hash = await crypto.subtle.digest('SHA-256', copy.buffer);
+  const hash = await crypto.subtle.digest('SHA-256', copy);
   return new Uint8Array(hash);
 }
 
