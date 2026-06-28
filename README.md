@@ -21,17 +21,32 @@ not a production cryptographic implementation.
   The exhibits contrast MPCitH tradeoffs such as larger signatures.
 - Prototyping UI-level understanding of toy PERK-style permutation witnesses.
   It shows relation checks and verification outcomes in browser-only TypeScript.
-- Not for production key management or compliance claims.
+- Do NOT use it for production key management or compliance claims.
   Toy parameters and educational code are not suitable for deployment security.
 
 ## Live Demo
 
-https://systemslibrarian.github.io/crypto-lab-mpcith-sign/
+**[systemslibrarian.github.io/crypto-lab-mpcith-sign](https://systemslibrarian.github.io/crypto-lab-mpcith-sign/)**
 
 The live app lets you split a secret into shares, run simulated party views,
 issue a challenge, and verify revealed views in an MPCitH-style round. You can
 also run Fiat-Shamir signing traces and a toy PERK sign/verify flow while
 adjusting controls such as party count N and field prime q.
+
+## What Can Go Wrong
+
+- Large signatures: MPCitH signatures carry per-execution commitment and seed-tree data, so they are far larger than lattice signatures — underestimating this breaks bandwidth budgets.
+- Too few repetitions: soundness depends on the number of parallel executions and the challenge space; using too few leaves a forger a non-negligible cheating probability.
+- Weak Fiat-Shamir: if the challenge hash does not bind all commitments and public inputs, an attacker can grind the transcript and forge signatures — the classic weak-Fiat-Shamir failure.
+- Predictable or reused seeds: the all-but-one opening relies on the unopened view's randomness staying hidden; bad RNG or seed reuse can leak the witness.
+- Toy parameters and no constant-time guarantees: this educational code uses small fields and is not side-channel hardened.
+
+## Real-World Usage
+
+- NIST additional-signatures on-ramp: several MPC-in-the-Head submissions (including SDitH, PERK, MIRA, RYDE, MQOM, and the VOLE-in-the-Head scheme FAEST) are candidates in NIST's call for additional post-quantum signatures.
+- Picnic: an earlier MPCitH/ZKBoo-based signature that reached the alternate-candidate stage of the original NIST PQC process, demonstrating signatures from symmetric primitives alone.
+- Assumption diversity: MPCitH lets signatures be built from hash/block-cipher hardness, hedging against breaks in structured lattice or code assumptions.
+- Cryptanalysis and research: the family is an active area for analyzing the size/soundness tradeoffs of zero-knowledge-derived signatures.
 
 ## How to Run Locally
 
@@ -42,7 +57,15 @@ npm install
 npm run dev
 ```
 
-No environment variables are required.
+## Related Demos
+
+- [crypto-lab-multivariate](https://systemslibrarian.github.io/crypto-lab-multivariate/) — UOV multivariate signatures, another non-lattice PQ family.
+- [crypto-lab-sphincs-ledger](https://systemslibrarian.github.io/crypto-lab-sphincs-ledger/) — SLH-DSA hash-based signatures, also built on symmetric assumptions.
+- [crypto-lab-dilithium-seal](https://systemslibrarian.github.io/crypto-lab-dilithium-seal/) — ML-DSA lattice signatures for assumption comparison.
+- [crypto-lab-falcon-seal](https://systemslibrarian.github.io/crypto-lab-falcon-seal/) — Falcon/FN-DSA NTRU lattice signatures.
+- [crypto-lab-zk-proof-lab](https://systemslibrarian.github.io/crypto-lab-zk-proof-lab/) — the Fiat-Shamir and commitment machinery underlying MPCitH.
+
+## Testing
 
 Run the cryptographic test suite (also gated in CI before every deploy):
 
@@ -52,12 +75,8 @@ npm test
 
 See [VERIFICATION.md](VERIFICATION.md) for the invariants each test enforces.
 
-## Part of the Crypto-Lab Suite
-
-One of 60+ live browser demos at
-[systemslibrarian.github.io/crypto-lab](https://systemslibrarian.github.io/crypto-lab/)
-- spanning Atbash (600 BCE) through NIST FIPS 203/204/205 (2024).
-
 ---
 
-*"Whether you eat or drink, or whatever you do, do all to the glory of God." — 1 Corinthians 10:31*
+*One of 60+ browser demos in the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
+
+*"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*
