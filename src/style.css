@@ -10,6 +10,7 @@
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --bg-main: #07131b;
   --bg-panel: rgba(6, 23, 32, 0.88);
   --bg-panel-alt: rgba(12, 33, 46, 0.92);
@@ -21,6 +22,7 @@
 }
 
 :root[data-theme="light"] {
+  color-scheme: light;
   --bg-main: #f2fbff;
   --bg-panel: rgba(247, 255, 255, 0.9);
   --bg-panel-alt: rgba(231, 247, 250, 0.95);
@@ -42,6 +44,13 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* Give <html> its own solid background so WebKit paints the canvas from it
+   (rather than promoting body's gradient and reporting the body background as
+   transparent, which makes axe assume a white page and flag dark-theme text). */
+html {
+  background-color: var(--bg-main);
 }
 
 body {
@@ -123,7 +132,7 @@ select {
 
 button {
   border: 1px solid var(--border);
-  background: #0c3344;
+  background-color: #0c3344;
   color: #e5f6ff;
   padding: 0.52rem 0.75rem;
   border-radius: 10px;
@@ -131,7 +140,7 @@ button {
 }
 
 :root[data-theme="light"] button {
-  background: #0c6f91;
+  background-color: #0c6f91;
 }
 
 button:hover {
@@ -193,7 +202,25 @@ select {
   border-radius: 8px;
   padding: 0.45rem 0.5rem;
   color: var(--text-main);
-  background: var(--bg-card);
+  background-color: var(--bg-card);
+}
+
+/* Style the select ourselves so WebKit doesn't fall back to its native UA
+   control (which ignores the author color and renders a black chevron/text on
+   the dark field, tripping axe color-contrast). A custom chevron keeps the
+   affordance while honoring --text-main. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 1.9rem;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.1rem) 55%,
+    calc(100% - 0.75rem) 55%;
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem;
+  background-repeat: no-repeat;
 }
 
 .button-row {
@@ -311,7 +338,7 @@ select {
 
 pre {
   overflow: auto;
-  background: #081c27;
+  background-color: #081c27;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.75rem;
@@ -322,7 +349,7 @@ pre {
 }
 
 :root[data-theme="light"] pre {
-  background: #eef8fb;
+  background-color: #eef8fb;
 }
 
 .trace {

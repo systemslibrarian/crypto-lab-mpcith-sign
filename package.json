@@ -9,9 +9,12 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:a11y": "playwright test",
     "deploy": "npm run build && gh-pages -d dist"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1",
     "gh-pages": "^6.3.0",
     "jsdom": "^29.1.1",
     "typescript": "~6.0.2",
