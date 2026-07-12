@@ -136,31 +136,6 @@ let perkShowPrivate = false;
 let cardShares: number[] = [];
 let cardChallenge = 0;
 
-function getTheme(): 'dark' | 'light' {
-  const current = document.documentElement.getAttribute('data-theme');
-  return current === 'light' ? 'light' : 'dark';
-}
-
-function syncThemeToggleButton(button: HTMLButtonElement, theme: 'dark' | 'light'): void {
-  if (theme === 'dark') {
-    button.textContent = '🌙';
-    button.setAttribute('aria-label', 'Switch to light mode');
-  } else {
-    button.textContent = '☀️';
-    button.setAttribute('aria-label', 'Switch to dark mode');
-  }
-}
-
-function attachThemeToggle(button: HTMLButtonElement): void {
-  syncThemeToggleButton(button, getTheme());
-  button.addEventListener('click', () => {
-    const nextTheme = getTheme() === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', nextTheme);
-    localStorage.setItem('theme', nextTheme);
-    syncThemeToggleButton(button, nextTheme);
-  });
-}
-
 function randomInt(maxExclusive: number): number {
   const sample = new Uint8Array(1);
   const limit = 256 - (256 % maxExclusive);
@@ -668,13 +643,13 @@ function render(): void {
     <header class="cl-hero">
       <div class="cl-hero-main">
         <h1 class="cl-hero-title">MPCitH</h1>
-        <p class="cl-hero-sub">MPC-in-the-Head zero-knowledge signatures · toy PERK</p>
+        <p class="cl-hero-sub">MPC-in-the-Head ZK signatures · Fiat-Shamir · toy PERK</p>
+        <p class="cl-hero-desc">Simulates many parties inside one prover, commits to every party's view, then reveals all-but-one so you can watch a witness get proven — and Fiat-Shamir turn that proof into a signature.</p>
       </div>
       <aside class="cl-hero-why" aria-label="Why it matters">
         <span class="cl-hero-why-label">WHY IT MATTERS</span>
-        <p class="cl-hero-why-text">To prove you know a secret without revealing it, MPCitH simulates many parties in one prover, commits to each view, then opens all-but-one to check. Fiat-Shamir makes it a signature — one route to quantum-safe crypto beyond lattices.</p>
+        <p class="cl-hero-why-text">Quantum computers will break the signatures securing today's software and identities. MPCitH needs only a hash function, giving a conservative post-quantum fallback that rests on far weaker assumptions than lattice schemes.</p>
       </aside>
-      <button id="theme-toggle" class="theme-toggle" type="button" style="position: absolute; top: 0; right: 0"></button>
     </header>
 
     <main class="layout" id="main" tabindex="-1">
@@ -888,11 +863,6 @@ Verifier recomputes e and checks consistency</pre>
     </main>
 
   `;
-
-  const themeToggle = document.querySelector<HTMLButtonElement>('#theme-toggle');
-  if (themeToggle) {
-    attachThemeToggle(themeToggle);
-  }
 
   const cardBtn = document.querySelector<HTMLButtonElement>('#reshuffle-cards');
   cardBtn?.addEventListener('click', () => {

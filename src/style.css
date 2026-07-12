@@ -80,11 +80,16 @@ body {
 }
 
 /* BEGIN cl-hero standard — managed, keep in sync across fleet */
-.cl-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:clamp(1rem,4vw,3rem);flex-wrap:wrap;margin:clamp(1rem,3vw,2rem) 0 1.5rem;position:relative;}
+/* Accent/tint/text colors map to this demo's theme vars: --text-main (foreground),
+   --text-soft (dim), --border, and --party-active as the demo accent (defined in
+   both light and dark). Body text uses the normal foreground so hero text passes
+   axe contrast (WCAG 2.1 AA) in BOTH themes. */
+.cl-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:clamp(1rem,4vw,3rem);flex-wrap:wrap;margin:clamp(1rem,3vw,2rem) 0 1.5rem;}
 .cl-hero-main{flex:1 1 22rem;min-width:min(100%,20rem);}
 .cl-hero-title{margin:0;font-size:clamp(1.6rem,3.8vw,2.7rem);font-weight:700;line-height:1.1;letter-spacing:.01em;color:var(--text-main);}
 .cl-hero-sub{margin:.4rem 0 0;font-size:clamp(.9rem,1.6vw,1.05rem);letter-spacing:.01em;opacity:.85;color:var(--text-soft);}
-.cl-hero-why{flex:0 1 min(40%,26rem);min-width:min(100%,15rem);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.05rem;background:var(--bg-card);}
+.cl-hero-desc{margin:.55rem 0 0;font-size:1rem;line-height:1.5;color:var(--text-soft);max-width:60ch;}
+.cl-hero-why{flex:0 1 min(40%,26rem);min-width:min(100%,15rem);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.05rem;background:color-mix(in oklab,var(--party-active) 6%,transparent);}
 .cl-hero-why-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.14em;color:var(--text-soft);}
 .cl-hero-why-text{margin:.35rem 0 0;font-size:.95rem;line-height:1.5;color:var(--text-main);}
 @media (max-width:640px){.cl-hero{flex-direction:column;}.cl-hero-why{flex-basis:auto;width:100%;}}
