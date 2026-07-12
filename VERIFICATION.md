@@ -29,12 +29,20 @@ broken invariant blocks deployment.
 
 ## UI regression (`tests/ui.test.ts`, jsdom)
 
-14. All five exhibits render on load.
+14. All six exhibit panels render on load (five conceptual exhibits; Exhibit 2
+    is split into the party simulation and the standalone cheating-prover
+    soundness experiment 2b).
 15. Raising the N slider after a round is committed clears the stale round and
     does not crash `renderPartyCards` / `verifyStep` (regression for an
     out-of-bounds commitment-array read).
 16. A persistent screen-reader live region (`#sr-live`) and the skip-link target
     (`#main`) are present.
+17. The typed secret is threaded into the witness/statement flow banner (the
+    default `0x2a` surfaces as witness coordinate `42`), proving the secret is
+    what gets proven rather than a discarded, freshly-randomized witness.
+18. A full Split -> MPC -> Challenge -> Verify opens the zero-knowledge
+    experiment listing the true hidden share plus decoys, all equally consistent.
+19. The cheating-prover experiment tallies 100 attempts as caught or slipped.
 
 ## Manual / build checks
 

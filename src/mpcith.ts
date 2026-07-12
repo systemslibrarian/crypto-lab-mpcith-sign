@@ -249,6 +249,35 @@ export async function generateStatement(
   };
 }
 
+/**
+ * Build an A·x=b statement whose witness x is supplied by the caller (rather
+ * than freshly randomized). This lets the interactive demo prove knowledge of
+ * the SAME secret the learner controls: the witness is derived from their
+ * input, a random public matrix A is drawn, and b = A·x is published. Nothing
+ * is faked — b is the honest product, and the witness is never revealed by the
+ * all-but-one opening.
+ */
+export async function statementFromWitness(
+  witness: number[],
+  m: number,
+  q: number,
+): Promise<Statement> {
+  if (!Number.isInteger(m) || m <= 0) {
+    throw new Error('m must be a positive integer');
+  }
+  if (!Number.isInteger(q) || q < 2 || q > 251) {
+    throw new Error('q must be in [2, 251] for this demo');
+  }
+  const n = witness.length;
+  if (n === 0) {
+    throw new Error('witness must be non-empty');
+  }
+  validateWitness(witness, n, q);
+  const A = Array.from({ length: m }, () => Array.from({ length: n }, () => randomInt(q)));
+  const b = multiplyMatrixVector(A, witness, q);
+  return { A, b, q };
+}
+
 export async function mpcRound(
   statement: Statement,
   witness: number[],

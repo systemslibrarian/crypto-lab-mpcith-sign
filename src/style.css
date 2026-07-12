@@ -467,6 +467,318 @@ th {
   }
 }
 
+.exhibit-lead {
+  color: var(--text-soft);
+  margin-top: 0;
+}
+
+/* ── Secret-flow banner (Exhibit 2): secret → witness → public b ─────────── */
+.flow-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  margin-bottom: 0.5rem;
+}
+
+.flow-step {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.flow-k {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.flow-step code,
+.flow-banner code {
+  font-family: var(--font-mono);
+  color: var(--party-active);
+  overflow-wrap: anywhere;
+}
+
+.flow-arrow {
+  color: var(--challenge);
+  font-weight: 700;
+}
+
+.flow-note {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+}
+
+/* ── Zero-knowledge experiment ──────────────────────────────────────────── */
+.zk-details {
+  margin-top: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+.zk-details > summary {
+  cursor: pointer;
+  padding: 0.6rem 0.75rem;
+  font-weight: 700;
+  color: var(--text-main);
+  list-style: revert;
+}
+
+.zk-details > summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.zk-body {
+  padding: 0 0.75rem 0.75rem;
+}
+
+.zk-body p {
+  color: var(--text-soft);
+}
+
+.zk-body code,
+.zk-empty code {
+  font-family: var(--font-mono);
+  color: var(--text-main);
+}
+
+.zk-note {
+  border-left: 3px solid var(--challenge);
+  padding-left: 0.75rem;
+  font-size: 0.9rem;
+}
+
+/* ── Cheating-prover tally ───────────────────────────────────────────────── */
+.tally {
+  margin: 0.5rem 0;
+}
+
+.tally-bar {
+  display: flex;
+  height: 1.4rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.tally-caught {
+  background: var(--ok);
+  transition: flex-grow 200ms ease;
+}
+
+.tally-slipped {
+  background: var(--bad);
+  transition: flex-grow 200ms ease;
+}
+
+.tally-legend {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 3px;
+  vertical-align: middle;
+  border: 1px solid var(--border);
+}
+
+.swatch.caught {
+  background: var(--ok);
+}
+
+.swatch.slipped {
+  background: var(--bad);
+}
+
+.cheat-stat {
+  font-size: 0.92rem;
+}
+
+.cheat-result,
+.verify-result {
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+}
+
+/* ── Fiat-Shamir challenge diff ─────────────────────────────────────────── */
+.fs-diff {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  margin: 0.5rem 0;
+  background: var(--bg-card);
+}
+
+.fs-diff p {
+  margin: 0.3rem 0;
+}
+
+.fs-diff-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.fs-diff-label {
+  font-weight: 700;
+  color: var(--text-main);
+  min-width: 3.5rem;
+}
+
+.fs-hex {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+  color: var(--text-soft);
+}
+
+/* Fixed gold highlight (not the theme var) so the changed-byte contrast is
+   guaranteed >=4.5:1 in BOTH themes: near-black on #ffd700 is ~13:1. */
+.byte-changed {
+  background: #ffd700;
+  color: #1a1000;
+  border-radius: 3px;
+  padding: 0 1px;
+  font-weight: 700;
+}
+
+.fs-diff-hint,
+.fs-diff-caption {
+  font-size: 0.88rem;
+}
+
+.fs-flip-list {
+  margin: 0.25rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--text-soft);
+}
+
+/* Changed hidden-party text needs to be readable body text, not the neon
+   border accent. Use a brighter red on dark cards and the deep red on light —
+   both clear AA (>=4.5:1) against --bg-card. */
+.flip-changed {
+  font-weight: 700;
+  color: #ff8095;
+}
+
+:root[data-theme="light"] .flip-changed {
+  color: #b00f30;
+}
+
+/* Fixed deep red so white text clears AA (>=4.5:1) in BOTH themes: the neon
+   dark-theme #ff3366 would only reach ~2.7:1 against white. */
+.flip-tag {
+  font-size: 0.75rem;
+  background: #a10c2b;
+  color: #fff;
+  border-radius: 3px;
+  padding: 0 4px;
+}
+
+/* ── PERK permutation visualization ─────────────────────────────────────── */
+.perm-viz {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  margin: 0.5rem 0;
+  background: var(--bg-card);
+}
+
+.perm-label {
+  margin: 0.4rem 0 0.3rem;
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: 0.9rem;
+}
+
+.perm-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.perm-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 3.2rem;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel-alt);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+
+.perm-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.perm-x {
+  border-color: var(--party-active);
+}
+
+.perm-placed {
+  border-color: var(--commit);
+  transition: transform 250ms ease, border-color 250ms ease;
+}
+
+.perm-from {
+  font-size: 0.7rem;
+  color: var(--challenge);
+}
+
+.perm-hidden {
+  color: var(--text-soft);
+}
+
+.perm-arrows {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  overflow-wrap: anywhere;
+  margin: 0.4rem 0;
+}
+
+.perm-eq {
+  margin: 0.4rem 0 0;
+  font-size: 0.9rem;
+}
+
+.perm-eq code {
+  font-family: var(--font-mono);
+  color: var(--text-main);
+}
+
+.perk-empty,
+.zk-empty {
+  color: var(--text-soft);
+  font-style: italic;
+}
+
+.sharing-bridge {
+  border-left: 3px solid var(--party-active);
+  padding-left: 0.75rem;
+  font-size: 0.9rem;
+}
+
 /* Honor users who ask for less motion (WCAG 2.3.3 / 2.2). */
 @media (prefers-reduced-motion: reduce) {
   *,

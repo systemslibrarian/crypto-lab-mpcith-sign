@@ -6,7 +6,13 @@ This demo implements MPC-in-the-Head signatures using additive secret sharing,
 SHA-256 commitments, Merkle proofs, and the Fiat-Shamir transform for
 non-interactive signing. It demonstrates a toy linear relation proof for
 knowledge of a witness x where A*x = b (mod q), plus a toy PERK-style
-permutation witness flow. The algorithm family is post-quantum and
+permutation witness flow. The secret you type is threaded through the whole
+round: each byte becomes a coordinate of the witness x, a fresh public matrix A
+is drawn, and b = A*x is published — so the party cards share *your* witness,
+never a discarded one. A zero-knowledge experiment then lets you try (and fail)
+to recover the sealed share, a cheating-prover sandbox drives the soundness
+bound (1 - 1/N) and (1/N)^tau live, and the PERK permutation is shown as an
+actual rearrangement of y into x. The algorithm family is post-quantum and
 zero-knowledge oriented, with signature security tied to hash commitments and
 the hardness of the underlying statement relation. It is an educational model,
 not a production cryptographic implementation.
@@ -29,9 +35,14 @@ not a production cryptographic implementation.
 **[systemslibrarian.github.io/crypto-lab-mpcith-sign](https://systemslibrarian.github.io/crypto-lab-mpcith-sign/)**
 
 The live app lets you split a secret into shares, run simulated party views,
-issue a challenge, and verify revealed views in an MPCitH-style round. You can
-also run Fiat-Shamir signing traces and a toy PERK sign/verify flow while
-adjusting controls such as party count N and field prime q.
+issue a challenge, and verify revealed views in an MPCitH-style round — with the
+typed secret threaded through as the witness. After verifying, a zero-knowledge
+panel shows why the sealed share leaks nothing, and a separate cheating-prover
+experiment tallies caught-vs-slipped attempts converging on (1 - 1/N) with a tau
+slider that shrinks (1/N)^tau. You can also run Fiat-Shamir signing traces
+(with a message -> challenge -> hidden-party diff on "Modify Message") and a toy
+PERK sign/verify flow that visualizes pi as a rearrangement of y into x, all
+while adjusting controls such as party count N and field prime q.
 
 ## What Can Go Wrong
 
