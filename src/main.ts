@@ -665,13 +665,17 @@ function render(): void {
   const cheatEmpirical = cheatState.trials > 0 ? cheatState.slipped / cheatState.trials : 0;
 
   app.innerHTML = `
-    <div class="topbar">
-      <div>
-        <h1>Signing in Your Head</h1>
-        <p class="tagline">MPC-in-the-Head signatures, built up from a three-card trick to a toy PERK scheme.</p>
+    <header class="cl-hero">
+      <div class="cl-hero-main">
+        <h1 class="cl-hero-title">MPCitH</h1>
+        <p class="cl-hero-sub">MPC-in-the-Head zero-knowledge signatures · toy PERK</p>
       </div>
+      <aside class="cl-hero-why" aria-label="Why it matters">
+        <span class="cl-hero-why-label">WHY IT MATTERS</span>
+        <p class="cl-hero-why-text">To prove you know a secret without revealing it, MPCitH simulates many parties in one prover, commits to each view, then opens all-but-one to check. Fiat-Shamir makes it a signature — one route to quantum-safe crypto beyond lattices.</p>
+      </aside>
       <button id="theme-toggle" class="theme-toggle" type="button" style="position: absolute; top: 0; right: 0"></button>
-    </div>
+    </header>
 
     <main class="layout" id="main" tabindex="-1">
       <section class="panel">
