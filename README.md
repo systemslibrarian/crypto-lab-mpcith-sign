@@ -9,13 +9,41 @@ knowledge of a witness x where A*x = b (mod q), plus a toy PERK-style
 permutation witness flow. The secret you type is threaded through the whole
 round: each byte becomes a coordinate of the witness x, a fresh public matrix A
 is drawn, and b = A*x is published — so the party cards share *your* witness,
-never a discarded one. A zero-knowledge experiment then lets you try (and fail)
-to recover the sealed share, a cheating-prover sandbox drives the soundness
-bound (1 - 1/N) and (1/N)^tau live, and the PERK permutation is shown as an
-actual rearrangement of y into x. The algorithm family is post-quantum and
-zero-knowledge oriented, with signature security tied to hash commitments and
-the hardness of the underlying statement relation. It is an educational model,
-not a production cryptographic implementation.
+never a discarded one. The exhibit is honest about its simplification: an
+expandable note names this as the **linear special case** (parties only apply
+A*share and the outputs sum to b purely by linearity — no interaction, no
+correlated randomness) and explains that real MPCitH earns its name on
+*nonlinear* relations, where seed trees and correlated randomness enter. A
+zero-knowledge experiment then shows truthfully that the sealed party's *output*
+is pinned by b − Σ(revealed outputs) — only one candidate share matches it —
+while the *witness coordinate* stays hidden: a slider varies the hidden share
+and the revealed transcript never moves. A **Sign this round** button carries the
+exact secret, N, A and b into the Fiat-Shamir exhibit, so the same committed
+round you built interactively becomes a signature side by side. A cheating-prover
+sandbox drives the soundness bound (1 - 1/N) and (1/N)^tau live, and PERK is
+framed as the *same wrapper around a different hard problem* (permuted kernel),
+shown as an actual rearrangement of y into x. The algorithm family is
+post-quantum and zero-knowledge oriented, with signature security tied to hash
+commitments and the hardness of the underlying statement relation. It is an
+educational model, not a production cryptographic implementation.
+
+## Exhibits
+
+1. **The Idea** — the three-card XOR analogy (XOR = + mod 2 in GF(2)), bridged
+   explicitly to the same operation over a larger group (+ mod q) in Exhibit 2.
+2. **MPC Party Simulation** — split your witness across N parties, commit each
+   view, challenge, and open all-but-one; with first-encounter glosses for
+   *additive secret sharing*, *commitment*, *binding*, and *all-but-one opening*,
+   an honest "what does MPC really mean here?" note (the linear special case),
+   and a truthful zero-knowledge slider (output pinned, witness hidden).
+3. **Fiat-Shamir Signature** — replace the live verifier with a hash; the
+   **Sign this round** button threads Exhibit 2's exact statement here so you
+   watch one round become a signature, and Modify Message shows message →
+   challenge → hidden-party movement over the same statement.
+4. **Toy PERK** — same MPCitH wrapper, a *different* hard statement (permuted
+   kernel) inside, visualized as a permutation rearranging y into x.
+5. **Security Diversity** — assumption diversity table (lattice vs hash vs
+   MPCitH), reinforcing that MPCitH is a compiler, not a single scheme.
 
 ## When to Use It
 

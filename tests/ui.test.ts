@@ -90,12 +90,20 @@ describe('Exhibit 2 UI', () => {
     await clickAndSettle('run-mpc');
     await clickAndSettle('run-challenge');
     await clickAndSettle('run-verify');
-    // The ZK panel lists the true hidden share plus decoys, all "consistent".
+    // The ZK panel now honestly shows that the sealed party's OUTPUT is pinned
+    // (b − Σ revealed) while its SHARE is not — only one candidate matches the
+    // required output, and a slider varies the hidden witness while the revealed
+    // transcript stays byte-for-byte identical.
     const zk = document.querySelector('.zk-details[open]');
     expect(zk).toBeTruthy();
-    expect(zk?.textContent ?? '').toMatch(/equally consistent|consistent/i);
-    // At least the true share row plus two decoys.
+    expect(zk?.textContent ?? '').toMatch(/required output/i);
+    expect(zk?.textContent ?? '').toMatch(/witness coordinate/i);
+    // True share row plus two decoys.
     expect(document.querySelectorAll('.zk-body tbody tr').length).toBeGreaterThanOrEqual(3);
+    // Exactly one candidate matches the required output (the real share).
+    expect(document.querySelectorAll('.zk-body tbody tr.zk-row-match').length).toBe(1);
+    // The zero-knowledge slider is present.
+    expect(document.getElementById('zk-share-slider')).toBeTruthy();
   });
 
   it('runs the cheating-prover experiment and tallies caught vs slipped', async () => {

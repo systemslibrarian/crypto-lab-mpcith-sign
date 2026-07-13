@@ -795,6 +795,206 @@ th {
   font-size: 0.9rem;
 }
 
+/* ── First-encounter glosses (dotted underline + native tooltip) ─────────── */
+.gloss {
+  font-style: normal;
+  border-bottom: 1px dotted var(--party-active);
+  cursor: help;
+}
+
+/* ── "What does MPC really mean here?" linear-case note ──────────────────── */
+.linear-note {
+  margin: 0.5rem 0 0.75rem;
+  border: 1px solid var(--challenge);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--challenge) 8%, var(--bg-card));
+}
+
+.linear-note > summary {
+  cursor: pointer;
+  padding: 0.55rem 0.75rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.linear-note > summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.linear-note-body {
+  padding: 0 0.75rem 0.6rem;
+}
+
+.linear-note-body p {
+  margin: 0.5rem 0;
+  font-size: 0.92rem;
+}
+
+/* ── Zero-knowledge honest table + slider ────────────────────────────────── */
+.zk-body td code,
+.zk-body th {
+  font-family: var(--font-mono);
+}
+
+.zk-row-match td {
+  background: color-mix(in oklab, var(--ok) 12%, transparent);
+}
+
+/* Match/no-match verdicts: use icon + text + color (never color alone). The
+   neon --bad (#ff3366) fails AA on the dark card, so use a brighter red on dark
+   and the deep red on light — same treatment as .flip-changed. Both clear
+   4.5:1 against --bg-card in their theme. */
+.zk-match {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.zk-nomatch {
+  color: #ff8095;
+  font-weight: 700;
+}
+
+:root[data-theme="light"] .zk-nomatch {
+  color: #b00f30;
+}
+
+.zk-slider {
+  margin: 0.75rem 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-panel-alt);
+}
+
+.zk-slider label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.4rem;
+}
+
+.zk-delta {
+  font-family: var(--font-mono);
+  color: var(--challenge);
+  font-weight: 700;
+}
+
+.zk-slider-readout {
+  margin-top: 0.5rem;
+}
+
+.zk-slider-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+}
+
+.zk-slider-k {
+  min-width: 10rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.zk-slider-line code {
+  font-family: var(--font-mono);
+  color: var(--party-active);
+}
+
+.zk-tag-true {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.zk-slider-fixed {
+  border-top: 1px dashed var(--border);
+  padding-top: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.zk-fixed-val {
+  color: var(--ok);
+  font-family: var(--font-mono);
+}
+
+.zk-slider-note {
+  color: var(--text-soft);
+  font-size: 0.85rem;
+}
+
+.zk-punchline {
+  border-left-color: var(--ok);
+}
+
+/* ── One threaded round: Exhibit 2 → Exhibit 3 ───────────────────────────── */
+.thread-empty {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--text-soft);
+}
+
+.thread-banner {
+  border: 1px solid var(--party-active);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  margin: 0.5rem 0 0.75rem;
+  background: color-mix(in oklab, var(--party-active) 7%, var(--bg-card));
+}
+
+.thread-title {
+  margin: 0 0 0.5rem;
+  color: var(--text-main);
+}
+
+.thread-title code {
+  font-family: var(--font-mono);
+  color: var(--party-active);
+}
+
+.thread-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.thread-col {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  background: var(--bg-card);
+}
+
+.thread-col h4 {
+  margin: 0 0 0.35rem;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.thread-col p {
+  margin: 0.3rem 0;
+  font-size: 0.88rem;
+}
+
+.thread-col strong {
+  color: var(--text-main);
+}
+
+@media (max-width: 640px) {
+  .thread-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── PERK "same wrapper, different problem" bridge ───────────────────────── */
+.wrapper-bridge {
+  border-left: 3px solid var(--party-active);
+  padding-left: 0.75rem;
+  font-size: 0.95rem;
+}
+
 /* Honor users who ask for less motion (WCAG 2.3.3 / 2.2). */
 @media (prefers-reduced-motion: reduce) {
   *,

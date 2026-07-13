@@ -7,10 +7,16 @@ async function driveAll(page: Page): Promise<void> {
   await page.addStyleTag({
     content: `*,*::before,*::after{animation:none!important;transition:none!important;opacity:1!important;}`,
   });
-  // Drive Exhibit 2 full flow -> opens ZK panel.
+  // Open the linear-case explainer so its text is scanned.
+  await page.locator('.linear-note > summary').click();
+  // Drive Exhibit 2 full flow -> opens ZK panel (honest table + slider).
   await page.locator('#run-mpc').click();
   await page.locator('#run-challenge').click();
   await page.locator('#run-verify').click();
+  // Move the zero-knowledge slider so its readout (match / no-match) renders.
+  await page.locator('#zk-share-slider').fill('7');
+  // Thread this exact round into Exhibit 3 (side-by-side transcript banner).
+  await page.locator('#sign-this-round').click();
   // Cheating tally.
   await page.locator('#cheat-100').click();
   // Fiat-Shamir diff (modify twice to get before/after + flips).
