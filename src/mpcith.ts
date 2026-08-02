@@ -523,3 +523,115 @@ export async function verify(
     };
   }
 }
+
+/**
+ * Mount a real forgery attempt by a prover who does NOT know a witness.
+ *
+ * The cheating prover picks an arbitrary vector x', which does not satisfy
+ * A·x' = b, and splits it across the N parties as usual. Their outputs then
+ * sum to A·x' rather than b, so the prover tampers with ONE party's committed
+ * output, adding exactly the difference b − A·x' to it. The published
+ * commitments now imply the correct target, but that one party's committed
+ * output no longer equals A·(its share).
+ *
+ * Everything after that is the honest protocol: Fiat-Shamir derives the
+ * challenge from the message and the real Merkle roots, so the prover cannot
+ * choose which party stays hidden. The real `verify` above is then run against
+ * the tampered signature. It accepts only if every round happened to hide the
+ * tampered party — otherwise it opens that party and the recomputed-output
+ * check rejects. This is where (1/N)^tau comes from, and it is measured here
+ * rather than asserted.
+ */
+export async function attemptForgery(
+  message: Uint8Array,
+  statement: Statement,
+  params: MPCParams,
+  corruptParty: number,
+): Promise<{
+  accepted: boolean;
+  failureReason?: string;
+  hiddenParties: number[];
+  corruptParty: number;
+  everyRoundHidTamperedParty: boolean;
+}> {
+  validateParams(params);
+  validateStatement(statement);
+
+  const corrupt = Math.min(Math.max(corruptParty, 0), params.N - 1);
+  const q = statement.q;
+  const n = statement.A[0].length;
+
+  const rounds: Array<{
+    merkleRoot: Uint8Array;
+    commitments: Uint8Array[];
+    views: MPCView[];
+  }> = [];
+
+  for (let r = 0; r < params.tau; r += 1) {
+    // No witness: an arbitrary vector, which will not satisfy A·x' = b.
+    const fakeWitness = Array.from({ length: n }, () => randomInt(q));
+    const shares = splitWitnessAdditive(fakeWitness, params.N, q);
+    const partyOutputs = shares.map((share) => multiplyMatrixVector(statement.A, share, q));
+
+    let outputSum = new Array<number>(statement.b.length).fill(0);
+    for (const out of partyOutputs) {
+      outputSum = addVectorsMod(outputSum, out, q);
+    }
+
+    // The cheat: absorb the whole discrepancy into the corrupt party's output
+    // so the published outputs sum to b. That party's committed output now
+    // disagrees with A·(its share) — visible only if it is opened.
+    const delta = subtractVectorsMod(statement.b, outputSum, q);
+    partyOutputs[corrupt] = addVectorsMod(partyOutputs[corrupt], delta, q);
+
+    const views: MPCView[] = [];
+    const commitments: Uint8Array[] = [];
+    for (let i = 0; i < params.N; i += 1) {
+      const value = serializeViewShareOutput(shares[i], partyOutputs[i]);
+      const { commitment, salt } = await commit(value);
+      commitments.push(commitment);
+      views.push({ share: shares[i], output: partyOutputs[i], salt });
+    }
+
+    rounds.push({ merkleRoot: await merkleRoot(commitments), commitments, views });
+  }
+
+  const roots = rounds.map((round) => round.merkleRoot);
+  const challenge = await sha256(serializeRootsForChallenge(message, roots));
+
+  const hiddenParties: number[] = [];
+  const revealedViews: MPCSignature['revealedViews'] = [];
+
+  for (let r = 0; r < params.tau; r += 1) {
+    const hidden = deriveHiddenParty(challenge, r, params.N);
+    hiddenParties.push(hidden);
+
+    const row: MPCSignature['revealedViews'][number] = [];
+    for (let party = 0; party < params.N; party += 1) {
+      if (party === hidden) {
+        row.push(null);
+        continue;
+      }
+      const view = rounds[r].views[party];
+      const proof = await merkleProof(rounds[r].commitments, party);
+      row.push({
+        share: view.share,
+        output: view.output,
+        salt: view.salt,
+        merkleProof: proof.proof,
+      });
+    }
+    revealedViews.push(row);
+  }
+
+  const forged: MPCSignature = { merkleRoots: roots, challenge, hiddenParties, revealedViews };
+  const result = await verify(message, statement, forged, params);
+
+  return {
+    accepted: result.valid,
+    failureReason: result.failureReason,
+    hiddenParties,
+    corruptParty: corrupt,
+    everyRoundHidTamperedParty: hiddenParties.every((hidden) => hidden === corrupt),
+  };
+}

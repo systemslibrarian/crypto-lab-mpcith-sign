@@ -10,7 +10,13 @@ import {
   verifyCommit,
   verifyMerkleProof,
 } from '../src/sharing';
-import { generateStatement, sign, verify, type MPCParams } from '../src/mpcith';
+import {
+  attemptForgery,
+  generateStatement,
+  sign,
+  verify,
+  type MPCParams,
+} from '../src/mpcith';
 import {
   estimateSignatureSize,
   perkEquationHolds,
@@ -144,5 +150,70 @@ describe('toy PERK', () => {
     const size = estimateSignatureSize(params);
     const { merkleRoots, challenge, revealedViews, merkleProofs } = size.breakdown;
     expect(merkleRoots + challenge + revealedViews + merkleProofs).toBe(size.bytes);
+  });
+});
+
+describe('cheating prover (soundness experiment)', () => {
+  const q = 251;
+
+  it('is caught by the real verifier whenever a tampered party is opened', async () => {
+    // N=2, tau=6: acceptance needs all six rounds to hide party 0, which is
+    // (1/2)^6. Over several attempts at least one must be rejected, and the
+    // rejection has to come from the verifier's own output check.
+    const params: MPCParams = { N: 2, tau: 6, q };
+    const { statement } = await generateStatement(4, 3, q);
+    const message = new TextEncoder().encode('forgery test');
+
+    let caught = 0;
+    let lastReason = '';
+    for (let i = 0; i < 12; i += 1) {
+      const attempt = await attemptForgery(message, statement, params, 0);
+      // The verdict must agree with what actually happened in the transcript.
+      expect(attempt.accepted).toBe(attempt.everyRoundHidTamperedParty);
+      if (!attempt.accepted) {
+        caught += 1;
+        lastReason = attempt.failureReason ?? '';
+      }
+    }
+
+    expect(caught).toBeGreaterThan(0);
+    expect(lastReason).toMatch(/Local MPC output mismatch/);
+  });
+
+  it('accepts when every round happens to hide the tampered party', async () => {
+    // N=2, tau=1: each attempt is accepted with probability 1/2, so the
+    // acceptance path is reachable within a few dozen tries. This proves the
+    // forgery genuinely verifies rather than the exhibit merely claiming it.
+    const params: MPCParams = { N: 2, tau: 1, q };
+    const { statement } = await generateStatement(4, 3, q);
+    const message = new TextEncoder().encode('forgery test');
+
+    let accepted: Awaited<ReturnType<typeof attemptForgery>> | null = null;
+    for (let i = 0; i < 40 && accepted === null; i += 1) {
+      const attempt = await attemptForgery(message, statement, params, 0);
+      if (attempt.accepted) {
+        accepted = attempt;
+      }
+    }
+
+    expect(accepted, 'no forgery was accepted in 40 attempts at p=1/2').not.toBeNull();
+    expect(accepted!.everyRoundHidTamperedParty).toBe(true);
+    expect(accepted!.failureReason).toBeUndefined();
+  });
+
+  it('forges without a witness — the statement it targets stays unsatisfied', async () => {
+    const params: MPCParams = { N: 4, tau: 2, q };
+    const { statement } = await generateStatement(4, 3, q);
+    const message = new TextEncoder().encode('forgery test');
+
+    // Whatever the outcome, the prover never receives or uses a witness: the
+    // call takes only public data.
+    const attempt = await attemptForgery(message, statement, params, 2);
+    expect(attempt.corruptParty).toBe(2);
+    expect(attempt.hiddenParties).toHaveLength(params.tau);
+    for (const hidden of attempt.hiddenParties) {
+      expect(hidden).toBeGreaterThanOrEqual(0);
+      expect(hidden).toBeLessThan(params.N);
+    }
   });
 });

@@ -18,13 +18,30 @@ afterEach(() => {
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-async function clickAndSettle(id: string): Promise<void> {
+async function clickAndSettle(id: string, until?: () => boolean): Promise<void> {
   (document.getElementById(id) as HTMLButtonElement | null)?.click();
   // Allow the async handler (which may await many SHA-256 commitments and
-  // Merkle proofs) and its follow-up render() to run.
-  for (let i = 0; i < 12; i += 1) {
-    await tick();
+  // Merkle proofs) and its follow-up render() to run. Some handlers — the
+  // cheating-prover batch runs 100 full forgeries against the real verifier —
+  // need far more turns than a fixed dozen, so callers can pass a predicate
+  // and we settle until it holds.
+  if (!until) {
+    for (let i = 0; i < 12; i += 1) {
+      await tick();
+    }
+    return;
   }
+  // Generous bound: the cheating-prover batch runs 100 full forgeries, each
+  // awaiting many SHA-256 commitments, so the turn count needed varies with
+  // machine load. Fail loudly rather than falling through to an assertion on
+  // half-rendered output.
+  for (let i = 0; i < 200_000; i += 1) {
+    await tick();
+    if (until()) {
+      return;
+    }
+  }
+  throw new Error(`clickAndSettle('${id}') never settled`);
 }
 
 describe('Exhibit 2 UI', () => {
@@ -109,11 +126,20 @@ describe('Exhibit 2 UI', () => {
   it('runs the cheating-prover experiment and tallies caught vs slipped', async () => {
     await import('../src/main.ts');
     await tick();
-    await clickAndSettle('cheat-100');
-    // 100 attempts must all be accounted for as caught or slipped.
+    // Each attempt now builds a real tampered signature and runs the actual
+    // verifier, so the batch is genuinely async — settle until it reports.
+    await clickAndSettle('cheat-100', () =>
+      /100 forgery attempts/.test(document.querySelector('.cheat-result')?.textContent ?? ''),
+    );
+    // 100 attempts must all be accounted for as caught or accepted.
     const text = document.querySelector('.cheat-result')?.textContent ?? '';
-    expect(text).toMatch(/100 attempts/);
+    expect(text).toMatch(/100 forgery attempts/);
     expect(text).toMatch(/caught/i);
-    expect(text).toMatch(/slipped/i);
+    expect(text).toMatch(/accepted/i);
+
+    // The tally must add up to the attempts actually run.
+    const caught = Number(text.match(/caught (\d+)/)?.[1] ?? -1);
+    const accepted = Number(text.match(/accepted (\d+)/)?.[1] ?? -1);
+    expect(caught + accepted).toBe(100);
   });
 });

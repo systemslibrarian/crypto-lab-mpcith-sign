@@ -9,6 +9,7 @@ import {
   verifyMerkleProof,
 } from './sharing';
 import {
+  attemptForgery,
   generateStatement,
   mpcRound,
   sign,
@@ -115,6 +116,8 @@ interface CheatState {
   caught: number;
   slipped: number;
   lastOutcome: string;
+  /** Why the verifier rejected the most recent caught forgery, verbatim. */
+  lastFailureReason: string;
 }
 
 const cheatState: CheatState = {
@@ -125,6 +128,7 @@ const cheatState: CheatState = {
   caught: 0,
   slipped: 0,
   lastOutcome: '',
+  lastFailureReason: '',
 };
 
 const fsParams: MPCParams = { N: 8, tau: 4, q: 251 };
@@ -396,48 +400,46 @@ function zkSlide(pos: number): void {
 
 // ── Soundness experiment: play a cheating prover ────────────────────────────
 /**
- * Run ONE honest MPC round on a random A·x=b statement, then let the prover
- * cheat by corrupting one party's committed output. Draw a uniform challenge:
- * if the challenge hides the corrupted party, the cheat slips through
- * (probability 1/N per round); otherwise the tampered view is opened and the
- * verifier catches it (probability 1 − 1/N). Repeated over τ rounds the cheat
- * only slips if EVERY round happens to hide its corruption: (1/N)^τ.
+ * Play a cheating prover for real. Each attempt builds a full tampered
+ * signature — an arbitrary non-witness split across N parties, with one
+ * party's committed output altered so the published outputs still sum to b —
+ * and runs the demo's own `verify` against it. Nothing here is a coin flip:
+ * the challenge is Fiat-Shamir over the real Merkle roots, so the prover
+ * cannot pick which party stays hidden, and "caught" means the verifier
+ * actually rejected and said why.
  *
- * This is a real, honest simulation — the challenge is sampled with
- * crypto.getRandomValues and the catch condition is the actual "was the
- * tampered party opened?" test, not a hardcoded coin flip.
+ * The forgery is accepted only when every round happens to hide the tampered
+ * party, which is where (1/N)^tau comes from — measured, not asserted.
  */
-function runCheatBatch(batches: number): void {
+async function runCheatBatch(batches: number): Promise<void> {
   const { N, tau } = cheatState;
   const corrupt = Math.min(cheatState.corruptParty, N - 1);
   cheatState.corruptParty = corrupt;
 
+  const params: MPCParams = { N, tau, q: 251 };
+  const { statement } = await generateStatement(4, 3, params.q);
+  const message = encoder.encode('cheating-prover experiment');
+
   for (let t = 0; t < batches; t += 1) {
-    let slippedAllRounds = true;
-    for (let r = 0; r < tau; r += 1) {
-      // In each round the challenge hides one uniformly random party. The
-      // prover cheated in party `corrupt`. If that party is the hidden one,
-      // its tampered view is never opened -> not caught this round.
-      const hidden = randomInt(N);
-      const caughtThisRound = hidden !== corrupt;
-      if (caughtThisRound) {
-        slippedAllRounds = false;
-        break; // one caught round is enough to reject the whole signature
-      }
-    }
+    const attempt = await attemptForgery(message, statement, params, corrupt);
     cheatState.trials += 1;
-    if (slippedAllRounds) {
+    if (attempt.accepted) {
       cheatState.slipped += 1;
+      cheatState.lastFailureReason = '';
     } else {
       cheatState.caught += 1;
+      cheatState.lastFailureReason = attempt.failureReason ?? '';
     }
   }
 
   const empirical = cheatState.trials > 0 ? cheatState.slipped / cheatState.trials : 0;
   const theoretical = Math.pow(1 / N, tau);
   cheatState.lastOutcome =
-    `${cheatState.trials} attempts: caught ${cheatState.caught}, slipped ${cheatState.slipped}. ` +
-    `Empirical slip rate ${(empirical * 100).toFixed(2)}% vs theory (1/N)^τ = ${(theoretical * 100).toFixed(4)}%.`;
+    `${cheatState.trials} forgery attempts against the real verifier: caught ${cheatState.caught}, accepted ${cheatState.slipped}. ` +
+    `Empirical acceptance rate ${(empirical * 100).toFixed(2)}% vs theory (1/N)^τ = ${(theoretical * 100).toFixed(4)}%.` +
+    (cheatState.lastFailureReason
+      ? ` Last rejection: ${cheatState.lastFailureReason}.`
+      : '');
   announce(cheatState.lastOutcome);
 }
 
@@ -446,6 +448,7 @@ function resetCheat(): void {
   cheatState.caught = 0;
   cheatState.slipped = 0;
   cheatState.lastOutcome = '';
+  cheatState.lastFailureReason = '';
 }
 
 /**
@@ -967,9 +970,14 @@ function render(): void {
       <section class="panel">
         <h2>Exhibit 2b — Play a Cheating Prover</h2>
         <p class="exhibit-lead">
-          Suppose you <em>don't</em> know the witness and try to fake a party's output. You only escape if the
-          challenge happens to hide the party you corrupted. Run many rounds and watch the catch rate settle on
-          <span class="math">1&nbsp;&minus;&nbsp;1/N</span>.
+          Suppose you <em>don't</em> know the witness. Each attempt below really builds a forged signature —
+          an arbitrary non-witness split across the parties, with the party you pick having its committed
+          output altered so the published outputs still sum to <span class="math">b</span> — and runs it
+          through this page's own verifier. Fiat-Shamir derives the challenge from the real Merkle roots, so
+          you cannot choose who stays hidden. You escape only if every round happens to hide your corrupted
+          party; otherwise the verifier opens it, recomputes <span class="math">A&middot;share</span>, and
+          rejects. Run many attempts and watch the catch rate settle on
+          <span class="math">1&nbsp;&minus;&nbsp;(1/N)<sup>&tau;</sup></span>.
         </p>
         <div class="controls">
           <label>N parties: <span id="cheat-n-value">${cheatState.N}</span>
@@ -993,8 +1001,8 @@ function render(): void {
             <div class="tally-slipped" style="flex: ${cheatState.slipped}"></div>
           </div>
           <div class="tally-legend">
-            <span><span class="swatch caught"></span> caught ${cheatState.caught}</span>
-            <span><span class="swatch slipped"></span> slipped ${cheatState.slipped}</span>
+            <span><span class="swatch caught"></span> rejected by the verifier ${cheatState.caught}</span>
+            <span><span class="swatch slipped"></span> forgery accepted ${cheatState.slipped}</span>
           </div>
         </div>
         <p class="cheat-stat">
@@ -1217,14 +1225,12 @@ Verifier recomputes e and checks consistency</pre>
 
   const cheatOnceBtn = document.querySelector<HTMLButtonElement>('#cheat-once');
   cheatOnceBtn?.addEventListener('click', () => {
-    runCheatBatch(1);
-    render();
+    void runCheatBatch(1).then(render);
   });
 
   const cheat100Btn = document.querySelector<HTMLButtonElement>('#cheat-100');
   cheat100Btn?.addEventListener('click', () => {
-    runCheatBatch(100);
-    render();
+    void runCheatBatch(100).then(render);
   });
 
   const cheatResetBtn = document.querySelector<HTMLButtonElement>('#cheat-reset');
