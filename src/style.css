@@ -18,6 +18,7 @@
   --text-main: #d5e8f0;
   --text-soft: #99b9c7;
   --border: #1f4a60;
+  --control-border: #528fb3; /* field boundary: >=3.5:1 on --bg-card and every tinted gradient surface (SC 1.4.11) */
   --focus: #7de7ff;
 }
 
@@ -30,6 +31,7 @@
   --text-main: #0f2f3a;
   --text-soft: #2c5462;
   --border: #6f9aab;
+  --control-border: #578193; /* field boundary: >=3.4:1 on --bg-card and every local panel surface (SC 1.4.11) */
   --focus: #035a79;
 
   /* Light theme needs darker accents — the neon dark-theme values fail WCAG
@@ -212,7 +214,7 @@ label {
 input,
 select {
   width: 100%;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
   padding: 0.45rem 0.5rem;
   color: var(--text-main);
