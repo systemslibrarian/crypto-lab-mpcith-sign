@@ -497,9 +497,17 @@ async function signThreadedRound(): Promise<void> {
   }
   const q = exhibit2State.q;
   const witness = witnessFromSecret(secret, q);
-  // Same statement the learner just proved interactively: fresh public A, honest
-  // b = A·x over THEIR witness.
-  const statement = await statementFromWitness(witness, 3, q);
+  // The SAME statement Exhibit 2 published — the banner below claims "same
+  // public b", so it has to be the very A and b on screen above, not a freshly
+  // drawn one. Only mint a new statement when Exhibit 2 has not published one
+  // for this witness yet (MPC never run).
+  const published = exhibit2State.statement;
+  const reusable =
+    published !== null &&
+    published.q === q &&
+    published.A.every((row) => row.length === witness.length) &&
+    vecEqual(matVec(published.A, witness, q), published.b);
+  const statement = reusable ? published : await statementFromWitness(witness, 3, q);
   fsStatement = statement;
   fsWitness = witness;
   fsParams.N = exhibit2State.N;
@@ -763,7 +771,10 @@ function renderFsDiff(): string {
     .map((h, r) => {
       const prev = fsPrevHidden[r];
       const changed = prev !== undefined && prev !== h;
-      return `<li>round ${r + 1}: party ${prev !== undefined ? prev : '?'} <span aria-hidden="true">→</span> <span class="${changed ? 'flip-changed' : ''}">party ${h}</span>${changed ? ' <span class="flip-tag">changed</span>' : ''}</li>`;
+      // Party numbers are 1-based everywhere on this page (the Exhibit 2 cards,
+      // the challenge verdict, the threaded banner) — keep this list on the same
+      // footing so the two panels never name the same party differently.
+      return `<li>round ${r + 1}: party ${prev !== undefined ? prev + 1 : '?'} <span aria-hidden="true">→</span> <span class="${changed ? 'flip-changed' : ''}">party ${h + 1}</span>${changed ? ' <span class="flip-tag">changed</span>' : ''}</li>`;
     })
     .join('');
   return `
@@ -1043,7 +1054,7 @@ Verifier recomputes e and checks consistency</pre>
           </div>
         </div>
         ${renderFsDiff()}
-        <p>Hidden parties per round: ${fsHidden.length > 0 ? fsHidden.join(', ') : 'not generated'}</p>
+        <p>Hidden parties per round: ${fsHidden.length > 0 ? fsHidden.map((h) => `party ${h + 1}`).join(', ') : 'not generated'}</p>
         <pre class="trace" tabindex="0" role="region" aria-label="Challenge derivation trace">${esc(fsSignatureTrace || 'Run the demo to show challenge derivation.')}</pre>
       </section>
 
@@ -1131,7 +1142,16 @@ Verifier recomputes e and checks consistency</pre>
 
   const secretInput = document.querySelector<HTMLInputElement>('#secret-hex');
   secretInput?.addEventListener('input', () => {
-    exhibit2State.secretHex = secretInput.value.trim();
+    const next = secretInput.value.trim();
+    const changed = next !== exhibit2State.secretHex;
+    exhibit2State.secretHex = next;
+    // A published b is A·x for the OLD witness. Leaving it on the flow banner
+    // beside the NEW witness would print "b = A·x" for an x it was never
+    // computed from — and the committed party cards would hold the old shares.
+    if (changed && (exhibit2State.statement || exhibit2State.round)) {
+      exhibit2State.statement = null;
+      resetExhibit2Round('Secret changed. Split and run MPC again.');
+    }
     // Keep the flow banner live as the learner types.
     render();
   });

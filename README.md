@@ -106,13 +106,22 @@ npm run dev
 
 ## Testing
 
-Run the cryptographic test suite (also gated in CI before every deploy):
+Run the cryptographic test suite and the browser gate (both gated in CI before
+every deploy):
 
 ```bash
 npm test
+npm run test:a11y   # browser gate (Playwright): on-screen claims + WCAG A/AA
 ```
 
 See [VERIFICATION.md](VERIFICATION.md) for the invariants each test enforces.
+
+`e2e/claims.spec.ts` gates the page itself: it re-derives each on-screen headline
+from the numbers the page printed — the three cards against the secret they XOR
+to, the party shares against the witness, the party outputs against the published
+`b`, the zero-knowledge required output against `b − Σ(revealed outputs)`, the
+cheating tally against `(1/N)^τ`, the threaded signature against the exact `b`
+Exhibit 2 published, and PERK's `x` against the `y` slots `π` names.
 
 ---
 
