@@ -12,6 +12,7 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg-main: #07131b;
+  --bg-main-alt: #0d2029;
   --bg-panel: rgba(6, 23, 32, 0.88);
   --bg-panel-alt: rgba(12, 33, 46, 0.92);
   --bg-card: #0b2635;
@@ -25,6 +26,7 @@
 :root[data-theme="light"] {
   color-scheme: light;
   --bg-main: #f2fbff;
+  --bg-main-alt: #e3f2fd;
   --bg-panel: rgba(247, 255, 255, 0.9);
   --bg-panel-alt: rgba(231, 247, 250, 0.95);
   --bg-card: #ffffff;
@@ -62,7 +64,7 @@ body {
   background:
     radial-gradient(circle at 20% 10%, rgba(0, 212, 255, 0.13), transparent 36%),
     radial-gradient(circle at 85% 25%, rgba(255, 51, 102, 0.11), transparent 32%),
-    linear-gradient(170deg, var(--bg-main), #0d2029 75%);
+    linear-gradient(170deg, var(--bg-main), var(--bg-main-alt) 75%);
   min-height: 100vh;
 }
 
