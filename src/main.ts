@@ -585,7 +585,7 @@ function renderPartyCards(): string {
         <p><strong>Witness share (mod q):</strong> ${witnessShareText}</p>
         <p><strong>My output A·share:</strong> ${outputText}</p>
         <p><strong>Salt:</strong> ${saltText}</p>
-        <p><strong>Commitment:</strong> <code class="commitment" aria-label="Commitment hash for party ${i + 1}">${commitmentText}</code></p>
+        <p><strong>Commitment:</strong> <code class="commitment">${commitmentText}</code></p>
         <p class="status">Status: ● ${label}</p>
       </article>
     `);
@@ -604,7 +604,7 @@ function renderFlowBanner(): string {
   const witness = secretBytes.length > 0 ? witnessFromSecret(secretBytes, exhibit2State.q) : null;
   const bText = exhibit2State.statement ? `[${exhibit2State.statement.b.join(', ')}]` : 'run MPC to publish b';
   return `
-    <div class="flow-banner" aria-label="Secret flow through the demo">
+    <div class="flow-banner" role="group" aria-label="Secret flow through the demo">
       <span class="flow-step"><span class="flow-k">secret</span> <code>${esc(exhibit2State.secretHex || '∅')}</code></span>
       <span class="flow-arrow" aria-hidden="true">→</span>
       <span class="flow-step"><span class="flow-k">witness x</span> <code>${witness ? `[${witness.join(', ')}]` : '—'}</code></span>
@@ -719,7 +719,7 @@ function renderThreadedBanner(): string {
     t.interactiveHidden !== null ? `party ${t.interactiveHidden + 1}` : 'the party you challenged';
   const fsHiddenList = fsHidden.length > 0 ? fsHidden.map((h) => `party ${h + 1}`).join(', ') : '—';
   return `
-    <div class="thread-banner" aria-label="One statement threaded from Exhibit 2 into Exhibit 3">
+    <div class="thread-banner" role="group" aria-label="One statement threaded from Exhibit 2 into Exhibit 3">
       <p class="thread-title">
         <strong>Your Exhibit 2 round, now signed.</strong> Same secret <code>${esc(t.secretHex)}</code>,
         same <span class="math">N = ${t.N}</span>, same public <span class="math">b = [${t.b.join(', ')}]</span>.

@@ -129,6 +129,12 @@ pre {
 
 .layout {
   display: grid;
+  /* `minmax(0, 1fr)`, not the default `auto` track: an auto track takes its
+     minimum from the widest item's min-content, so the transcript `<pre>` sized
+     the column and the document scrolled sideways at 380px — even though that
+     `pre` already has `overflow: auto` and would have scrolled itself if
+     anything had constrained it. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
 }
 
@@ -157,7 +163,12 @@ button {
   cursor: pointer;
 }
 
-:root[data-theme="light"] button {
+/* `:not(.cl-btn)`: this is a blanket rule on every button, and the shared
+   header's controls are deliberately transparent on a bar that stays dark in
+   BOTH themes, with ink derived from that dark bar. Painting them blue here put
+   the theme toggle's light-teal glyph on a blue fill at 3.82:1. index.html
+   already excludes the header from the lab's own toggle styling the same way. */
+:root[data-theme="light"] button:not(.cl-btn) {
   background-color: #0c6f91;
 }
 
@@ -331,6 +342,19 @@ select {
   color: var(--text-main);
 }
 
+/* `nowrap` keeps an equation on one line, which is right on a wide screen. At
+   phone width the verification identity is 375px of unbreakable text and pushed
+   the document sideways (WCAG 1.4.10). Let it wrap there rather than making it
+   a scroller: 38 elements carry this class and most are single symbols, so
+   giving them all a keyboard-reachable scroll box would add 38 tab stops to
+   read one equation. */
+@media (max-width: 640px) {
+  .math {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
 .tagline {
   margin: 0.25rem 0 0;
   color: var(--text-soft);
@@ -444,7 +468,9 @@ th {
   }
 
   .columns {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr), not a bare 1fr — a bare fr track keeps an automatic
+       minimum of min-content, which is the same trap at the width it matters. */
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* Two even columns that always fit the viewport — no horizontal scroll. */
