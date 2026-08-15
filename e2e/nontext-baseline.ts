@@ -21,7 +21,6 @@ export const NONTEXT_BASELINE: Record<
   "control-boundary|button#cheat-100": { ratio: 1.78, required: 3.0, unverified: false },
   "control-boundary|button#cheat-once": { ratio: 1.79, required: 3.0, unverified: false },
   "control-boundary|button#cheat-reset": { ratio: 1.78, required: 3.0, unverified: false },
-  "control-boundary|button#cl-theme-toggle.cl-btn.cl-icon": { ratio: 2.45, required: 3.0, unverified: false },
   "control-boundary|button#perk-keygen": { ratio: 1.84, required: 3.0, unverified: false },
   "control-boundary|button#perk-reveal": { ratio: 1.82, required: 3.0, unverified: false },
   "control-boundary|button#perk-sign": { ratio: 1.82, required: 3.0, unverified: false },
