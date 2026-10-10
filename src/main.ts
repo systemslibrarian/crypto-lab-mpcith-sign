@@ -85,9 +85,9 @@ interface Exhibit2State {
     trueShare: number[];
     // A short list of candidate shares (true one first, then decoys). Only the
     // candidate whose A·share === requiredOutput is "consistent" — that is the
-    // honest point: the OUTPUT is pinned, the SHARE is not.
+    // output constraint alone may or may not determine the share.
     candidates: Array<{ share: number[]; output: number[]; matches: boolean }>;
-    // Slider position over an information-theoretic family of hidden shares that
+    // Slider position over candidate edits of the hidden share that
     // keep displayed opened-share bytes fixed; full transcripts are not rebuilt.
     sliderShare: number[];
     sliderPos: number;
@@ -140,8 +140,7 @@ let fsSignatureTrace = '';
 let fsHidden: number[] = [];
 let fsChallengeHex = '';
 // When the learner clicks "Sign this round" in Exhibit 2, we thread the EXACT
-// secret/N/A/b they built into Exhibit 3 so they watch the same committed views
-// become the signature. `fsThreaded` records the params used for that run so the
+// secret/N/A/b they built into Exhibit 3, with fresh committed signing rounds. `fsThreaded` records the params used for that run so the
 // side-by-side panel can label it as "your round from Exhibit 2".
 interface ThreadedRound {
   secretHex: string;
@@ -472,7 +471,7 @@ async function signWithFsState(): Promise<void> {
  *
  * We reuse their secret → witness → (A, b) and their party count N, then run
  * τ = N−1 Fiat-Shamir rounds over that same statement. The learner watches the
- * identical committed views' Merkle roots get hashed with the message into the
+ * fresh signing rounds' Merkle roots get hashed with the message into the
  * challenge, and the same kind of parties they hid by hand get hidden by the
  * hash. Nothing is faked: b is still A·x for THEIR x, and the challenge is the
  * real SHA-256(message ‖ roots).
@@ -611,7 +610,7 @@ function renderFlowBanner(): string {
 function renderZkPanel(): string {
   const zk = exhibit2State.zk;
   if (!zk) {
-    return `<p class="zk-empty">Run Split → MPC → Challenge → Verify, then a zero-knowledge experiment appears here.</p>`;
+    return `<p class="zk-empty">Run Split → MPC → Challenge → Verify, then a partial-view illustration appears here.</p>`;
   }
   const required = `[${zk.requiredOutput.join(', ')}]`;
   const rows = zk.candidates
@@ -704,7 +703,7 @@ function renderZkPanel(): string {
 function renderThreadedBanner(): string {
   if (!fsThreaded) {
     return `<p class="thread-empty">Tip: in Exhibit 2, click <strong>Sign this round ↓</strong> to carry your exact
-      secret, N, A and b down here and watch the same round become a signature.</p>`;
+      secret, N, A and b down here and watch that statement be signed with fresh committed rounds.</p>`;
   }
   const t = fsThreaded;
   const interactiveHidden =
@@ -713,9 +712,10 @@ function renderThreadedBanner(): string {
   return `
     <div class="thread-banner" role="group" aria-label="One statement threaded from Exhibit 2 into Exhibit 3">
       <p class="thread-title">
-        <strong>Your Exhibit 2 round, now signed.</strong> Same secret <code>${esc(t.secretHex)}</code>,
+        <strong>Your Exhibit 2 statement, now signed.</strong> Same secret <code>${esc(t.secretHex)}</code>,
         same <span class="math">N = ${t.N}</span>, same public <span class="math">b = [${t.b.join(', ')}]</span>.
       </p>
+      <p>Fresh shares, salts and commitments are generated for the signing rounds; the interactive Merkle root is not reused.</p>
       <div class="thread-cols">
         <div class="thread-col">
           <h4>Interactive (Exhibit 2)</h4>
@@ -954,7 +954,7 @@ function render(): void {
           <button id="run-mpc" type="button" aria-label="Run MPC round">Run MPC</button>
           <button id="run-challenge" type="button" aria-label="Select hidden party challenge">Challenge</button>
           <button id="run-verify" type="button" aria-label="Verify revealed party views">Verify</button>
-          <button id="sign-this-round" type="button" aria-label="Turn this exact round into a Fiat-Shamir signature in Exhibit 3">Sign this round ↓</button>
+          <button id="sign-this-round" type="button" aria-label="Sign this round’s statement with fresh Fiat-Shamir rounds in Exhibit 3">Sign this round ↓</button>
         </div>
         <p class="challenge-arrow">⇢ Challenge picks one hidden party · <em>Sign this round</em> carries this exact secret, N, A and b into Exhibit 3</p>
         <div class="party-grid">
@@ -963,7 +963,7 @@ function render(): void {
         <p class="verify-result" role="status" aria-live="polite">${esc(exhibit2State.verificationText)}</p>
 
         <details class="zk-details" ${exhibit2State.zk ? 'open' : ''}>
-          <summary>Can you recover the witness? (zero-knowledge experiment)</summary>
+          <summary>Can you recover the witness? (partial-view illustration)</summary>
           <div class="zk-body">
             ${renderZkPanel()}
           </div>

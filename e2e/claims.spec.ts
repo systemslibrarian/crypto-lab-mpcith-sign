@@ -462,6 +462,8 @@ test('sign this round: the threaded signature carries Exhibit 2 exact statement'
 
   const banner = await flat(page.locator('.thread-banner'));
   const claimed = grab(banner, /Same secret (\S+), same N = (\d+), same public b = \[([^\]]*)\]/);
+  expect(banner).toContain('Fresh shares, salts and commitments');
+  expect(banner).toContain('interactive Merkle root is not reused');
   expect(claimed[1]).toBe(published.secret);
   expect(Number(claimed[2])).toBe(6);
   // Regression: "same public b" must be the b Exhibit 2 published, not a fresh
