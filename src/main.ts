@@ -88,7 +88,7 @@ interface Exhibit2State {
     // honest point: the OUTPUT is pinned, the SHARE is not.
     candidates: Array<{ share: number[]; output: number[]; matches: boolean }>;
     // Slider position over an information-theoretic family of hidden shares that
-    // all leave the revealed transcript byte-for-byte identical (see below).
+    // keep displayed opened-share bytes fixed; full transcripts are not rebuilt.
     sliderShare: number[];
     sliderPos: number;
   } | null;
@@ -331,19 +331,13 @@ async function verifyStep(): Promise<void> {
   exhibit2State.verificationText =
     `Verifier accepted all ${checked} revealed views — each commitment binds (SHA-256), sits under the ` +
     `Merkle root, and satisfies output = A·share. Party ${hidden + 1} stayed sealed, yet the proof holds. ` +
-    `Open the "Can you recover the witness?" panel to see why that leaks nothing.`;
+    `Open the "Can you recover the witness?" panel to inspect what is fixed and what the slider does not prove.`;
 
-  // Build the zero-knowledge demonstration HONESTLY.
-  //
-  // Two facts the panel must keep straight (the old panel blurred them):
-  //   1. The sealed party's OUTPUT is DETERMINED. Everyone agrees it must equal
-  //      requiredOutput = b − Σ(revealed outputs), because the outputs sum to b.
-  //      So exactly ONE thing about the hidden party is public: its output.
-  //   2. The sealed party's SHARE is NOT determined. Many shares s satisfy
-  //      A·s = requiredOutput are possible in general, but more importantly the
-  //      revealed transcript is byte-for-byte identical no matter what witness
-  //      the prover holds — the N−1 revealed shares are uniform and independent
-  //      of the hidden coordinate. THAT is what stays hidden.
+  // Inspect the fixed statement and opened shares, not a ZK simulator proof.
+  // The hidden output is b - sum(opened outputs). A different hidden share
+  // preserves it only along a kernel direction of A; arbitrary first-coordinate
+  // edits generally change it. Original commitments/root are not regenerated.
+  // The public statement itself can determine a witness in this toy relation.
   const requiredOutput = statement.b.map((value, i) => mod(value - summed[i], q));
   const trueHiddenShare = round.views[hidden].share;
 
@@ -374,17 +368,11 @@ async function verifyStep(): Promise<void> {
 }
 
 /**
- * The zero-knowledge slider. The learner drags a value `t`; we build a hidden
- * share for a DIFFERENT candidate witness and show that the revealed transcript
- * does not move at all.
- *
- * How this is honest: the revealed N−1 views are fixed data. The prover could
- * equally have held any witness x' = x + Δ; then the sealed party's share would
- * be trueShare + Δ (all other shares unchanged), producing the same revealed
- * transcript but a different sealed output A·(trueShare+Δ). The slider walks Δ
- * along the first coordinate (0…q−1). At Δ=0 we recover the real witness; the
- * required-output box and the revealed transcript never change, proving the
- * verifier cannot distinguish which witness was used.
+ * A partial-view illustration: edit the candidate hidden share's coordinate 0.
+ * Opened-share bytes remain fixed, but A*candidate generally differs from the
+ * required hidden output. No alternate commitments, Merkle root or accepted
+ * transcript are constructed. Even a kernel edit does not by itself preserve
+ * committed view bytes or establish a zero-knowledge simulation proof.
  */
 function zkSlide(pos: number): void {
   const zk = exhibit2State.zk;
@@ -666,9 +654,10 @@ function renderZkPanel(): string {
       </table>
     </div>
     <p class="zk-note">
-      So what actually stays hidden? Not the output (it&rsquo;s determined) — the <strong>witness coordinate</strong>.
-      The prover could have held a <em>different</em> secret and produced a <strong>byte-for-byte identical</strong>
-      revealed transcript, just with a different sealed share. Drag below to try every alternative:
+      Which <strong>witness coordinate</strong> is possible depends on the public statement
+      <span class="math">A·x = b</span>. Drag below to edit a candidate hidden share while
+      holding the opened-share bytes fixed. This is a partial-view illustration,
+      not another accepted transcript.
     </p>
     <div class="zk-slider">
       <label for="zk-share-slider">Suppose the prover&rsquo;s secret were different (Δ on coordinate 0):
@@ -688,16 +677,19 @@ function renderZkPanel(): string {
           ${sliderMatches ? '<span class="zk-match">● still hits b</span>' : '<span class="zk-nomatch">● a different b</span>'}
         </p>
         <p class="zk-slider-line zk-slider-fixed">
-          <span class="zk-slider-k">revealed transcript</span>
+          <span class="zk-slider-k">opened-share bytes</span>
           <strong class="zk-fixed-val">unchanged</strong>
-          <span class="zk-slider-note">— the ${exhibit2State.N - 1} opened views never move, so the verifier sees the same bytes for every Δ.</span>
+          <span class="zk-slider-note">— the ${exhibit2State.N - 1} opened shares stay fixed; this does not mean the full verifier transcript is unchanged.</span>
         </p>
       </div>
     </div>
     <p class="zk-note zk-punchline">
-      That is the a-ha of zero-knowledge: revealing <span class="math">N−1</span> views pins the <em>output</em>,
-      never the <em>secret</em>. Every Δ above is a different witness the prover could equally have held, all
-      producing the identical transcript you already accepted.
+      The public statement and original commitments/Merkle root are <strong>not regenerated</strong>.
+      A different hidden output fails the original statement. Only a kernel-direction change
+      preserves <span class="math">A·x = b</span>; even then, edited share bytes generally
+      require different commitments. These candidate edits are not accepted alternative
+      transcripts and are <strong>not a zero-knowledge simulation proof</strong>.
+      The public linear equation can itself determine the witness in this toy model.
     </p>
   `;
 }
