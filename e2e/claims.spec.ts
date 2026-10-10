@@ -230,7 +230,7 @@ test('exhibit 2 failure paths: each precondition is enforced and named', async (
   expect(cards.every((c) => c.share === null)).toBe(true);
 });
 
-test('zero-knowledge panel: the sealed output is pinned by b, the sealed share is not', async ({
+test('partial-view panel: fixed opened shares do not imply an accepted alternate transcript', async ({
   page,
 }) => {
   await open(page);
@@ -265,7 +265,7 @@ test('zero-knowledge panel: the sealed output is pinned by b, the sealed share i
     expect(decoy).not.toEqual(required);
   }
 
-  // The slider walks alternative witnesses. Δ = 0 is the real one…
+  // The slider edits candidate shares. Δ = 0 is the original share…
   const trueShare = vec(grab(firstRow, /the prover’s real share \[([^\]]*)\]/)[1]!);
   const readSlider = async () => {
     const text = await flat(page.locator('#zk-slider-readout'));
@@ -273,7 +273,7 @@ test('zero-knowledge panel: the sealed output is pinned by b, the sealed share i
       share: vec(grab(text, /sealed share becomes \[([^\]]*)\]/)[1]!),
       output: vec(grab(text, /its output would be \[([^\]]*)\]/)[1]!),
       hitsB: text.includes('still hits b'),
-      transcript: grab(text, /revealed transcript (\w+)/)[1]!,
+      openedShareBytes: grab(text, /opened-share bytes (\w+)/)[1]!,
     };
   };
   let slider = await readSlider();
@@ -281,8 +281,8 @@ test('zero-knowledge panel: the sealed output is pinned by b, the sealed share i
   expect(slider.output).toEqual(required);
   expect(slider.hitsB).toBe(true);
 
-  // …and any other Δ is a different witness with the same revealed transcript.
-  const transcriptBefore = await flat(page.locator('.party-grid'));
+  // A nonzero edit preserves the displayed opened shares, but fails this statement.
+  const openedBefore = await flat(page.locator('.party-grid'));
   await page.locator('#zk-share-slider').fill('7');
   await expect(page.locator('.zk-delta')).toHaveText('Δ = 7');
   slider = await readSlider();
@@ -290,9 +290,13 @@ test('zero-knowledge panel: the sealed output is pinned by b, the sealed share i
   expect(slider.share.slice(1)).toEqual(trueShare.slice(1));
   expect(slider.output).not.toEqual(required);
   expect(slider.hitsB).toBe(false);
-  expect(slider.transcript).toBe('unchanged');
-  // The claim that the transcript does not move, checked against the transcript.
-  expect(await flat(page.locator('.party-grid'))).toBe(transcriptBefore);
+  expect(slider.openedShareBytes).toBe('unchanged');
+  // The narrower unchanged-share claim is checked against the actual party grid.
+  expect(await flat(page.locator('.party-grid'))).toBe(openedBefore);
+  expect((await flow(page)).b).toEqual(published);
+  await expect(page.locator('.zk-punchline')).toContainText('not regenerated');
+  await expect(page.locator('.zk-punchline')).toContainText('not a zero-knowledge simulation proof');
+  await expect(page.locator('.zk-body')).not.toContainText('identical transcript you already accepted');
 });
 
 // ---------------------------------------------------------------------------
@@ -458,6 +462,8 @@ test('sign this round: the threaded signature carries Exhibit 2 exact statement'
 
   const banner = await flat(page.locator('.thread-banner'));
   const claimed = grab(banner, /Same secret (\S+), same N = (\d+), same public b = \[([^\]]*)\]/);
+  expect(banner).toContain('Fresh shares, salts and commitments');
+  expect(banner).toContain('interactive Merkle root is not reused');
   expect(claimed[1]).toBe(published.secret);
   expect(Number(claimed[2])).toBe(6);
   // Regression: "same public b" must be the b Exhibit 2 published, not a fresh

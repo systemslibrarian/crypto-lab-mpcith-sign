@@ -14,12 +14,16 @@ expandable note names this as the **linear special case** (parties only apply
 A*share and the outputs sum to b purely by linearity — no interaction, no
 correlated randomness) and explains that real MPCitH earns its name on
 *nonlinear* relations, where seed trees and correlated randomness enter. A
-zero-knowledge experiment then shows truthfully that the sealed party's *output*
-is pinned by b − Σ(revealed outputs) — only one candidate share matches it —
-while the *witness coordinate* stays hidden: a slider varies the hidden share
-and the revealed transcript never moves. A **Sign this round** button carries the
-exact secret, N, A and b into the Fiat-Shamir exhibit, so the same committed
-round you built interactively becomes a signature side by side. A cheating-prover
+partial-view illustration shows that the sealed party's output is pinned by
+b − Σ(revealed outputs). The slider edits a candidate hidden share while keeping
+opened-share bytes fixed; arbitrary coordinate changes generally fail the same
+public statement. Only kernel-direction edits preserve A*x=b, and even those do
+not preserve the original committed share bytes automatically. Commitments and
+the Merkle root are not regenerated, so this is not the same accepted transcript
+or a zero-knowledge simulation proof. The public toy linear statement can itself
+determine a witness. A **Sign this round** button carries the
+exact secret, N, A and b into the Fiat-Shamir exhibit, so the same statement
+is signed with fresh committed rounds alongside the interactive round. A cheating-prover
 sandbox drives the soundness bound (1 - 1/N) and (1/N)^tau live, and PERK is
 framed as the *same wrapper around a different hard problem* (permuted kernel),
 shown as an actual rearrangement of y into x. The algorithm family is
@@ -35,10 +39,10 @@ educational model, not a production cryptographic implementation.
    view, challenge, and open all-but-one; with first-encounter glosses for
    *additive secret sharing*, *commitment*, *binding*, and *all-but-one opening*,
    an honest "what does MPC really mean here?" note (the linear special case),
-   and a truthful zero-knowledge slider (output pinned, witness hidden).
+   and a partial-view slider (required output pinned, opened shares fixed; no alternate accepted transcript or simulation proof).
 3. **Fiat-Shamir Signature** — replace the live verifier with a hash; the
    **Sign this round** button threads Exhibit 2's exact statement here so you
-   watch one round become a signature, and Modify Message shows message →
+   watch that statement be signed with fresh committed rounds, and Modify Message shows message →
    challenge → hidden-party movement over the same statement.
 4. **Toy PERK** — same MPCitH wrapper, a *different* hard statement (permuted
    kernel) inside, visualized as a permutation rearranging y into x.
@@ -64,8 +68,9 @@ educational model, not a production cryptographic implementation.
 
 The live app lets you split a secret into shares, run simulated party views,
 issue a challenge, and verify revealed views in an MPCitH-style round — with the
-typed secret threaded through as the witness. After verifying, a zero-knowledge
-panel shows why the sealed share leaks nothing, and a separate cheating-prover
+typed secret threaded through as the witness. After verifying, a partial-view
+panel distinguishes unchanged opened-share bytes from a full accepted transcript;
+it does not prove witness privacy, and a separate cheating-prover
 experiment tallies caught-vs-slipped attempts converging on (1 - 1/N) with a tau
 slider that shrinks (1/N)^tau. You can also run Fiat-Shamir signing traces
 (with a message -> challenge -> hidden-party diff on "Modify Message") and a toy

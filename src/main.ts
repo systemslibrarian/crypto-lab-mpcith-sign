@@ -85,10 +85,10 @@ interface Exhibit2State {
     trueShare: number[];
     // A short list of candidate shares (true one first, then decoys). Only the
     // candidate whose A·share === requiredOutput is "consistent" — that is the
-    // honest point: the OUTPUT is pinned, the SHARE is not.
+    // output constraint alone may or may not determine the share.
     candidates: Array<{ share: number[]; output: number[]; matches: boolean }>;
-    // Slider position over an information-theoretic family of hidden shares that
-    // all leave the revealed transcript byte-for-byte identical (see below).
+    // Slider position over candidate edits of the hidden share that
+    // keep displayed opened-share bytes fixed; full transcripts are not rebuilt.
     sliderShare: number[];
     sliderPos: number;
   } | null;
@@ -140,8 +140,7 @@ let fsSignatureTrace = '';
 let fsHidden: number[] = [];
 let fsChallengeHex = '';
 // When the learner clicks "Sign this round" in Exhibit 2, we thread the EXACT
-// secret/N/A/b they built into Exhibit 3 so they watch the same committed views
-// become the signature. `fsThreaded` records the params used for that run so the
+// secret/N/A/b they built into Exhibit 3, with fresh committed signing rounds. `fsThreaded` records the params used for that run so the
 // side-by-side panel can label it as "your round from Exhibit 2".
 interface ThreadedRound {
   secretHex: string;
@@ -331,19 +330,13 @@ async function verifyStep(): Promise<void> {
   exhibit2State.verificationText =
     `Verifier accepted all ${checked} revealed views — each commitment binds (SHA-256), sits under the ` +
     `Merkle root, and satisfies output = A·share. Party ${hidden + 1} stayed sealed, yet the proof holds. ` +
-    `Open the "Can you recover the witness?" panel to see why that leaks nothing.`;
+    `Open the "Can you recover the witness?" panel to inspect what is fixed and what the slider does not prove.`;
 
-  // Build the zero-knowledge demonstration HONESTLY.
-  //
-  // Two facts the panel must keep straight (the old panel blurred them):
-  //   1. The sealed party's OUTPUT is DETERMINED. Everyone agrees it must equal
-  //      requiredOutput = b − Σ(revealed outputs), because the outputs sum to b.
-  //      So exactly ONE thing about the hidden party is public: its output.
-  //   2. The sealed party's SHARE is NOT determined. Many shares s satisfy
-  //      A·s = requiredOutput are possible in general, but more importantly the
-  //      revealed transcript is byte-for-byte identical no matter what witness
-  //      the prover holds — the N−1 revealed shares are uniform and independent
-  //      of the hidden coordinate. THAT is what stays hidden.
+  // Inspect the fixed statement and opened shares, not a ZK simulator proof.
+  // The hidden output is b - sum(opened outputs). A different hidden share
+  // preserves it only along a kernel direction of A; arbitrary first-coordinate
+  // edits generally change it. Original commitments/root are not regenerated.
+  // The public statement itself can determine a witness in this toy relation.
   const requiredOutput = statement.b.map((value, i) => mod(value - summed[i], q));
   const trueHiddenShare = round.views[hidden].share;
 
@@ -374,17 +367,11 @@ async function verifyStep(): Promise<void> {
 }
 
 /**
- * The zero-knowledge slider. The learner drags a value `t`; we build a hidden
- * share for a DIFFERENT candidate witness and show that the revealed transcript
- * does not move at all.
- *
- * How this is honest: the revealed N−1 views are fixed data. The prover could
- * equally have held any witness x' = x + Δ; then the sealed party's share would
- * be trueShare + Δ (all other shares unchanged), producing the same revealed
- * transcript but a different sealed output A·(trueShare+Δ). The slider walks Δ
- * along the first coordinate (0…q−1). At Δ=0 we recover the real witness; the
- * required-output box and the revealed transcript never change, proving the
- * verifier cannot distinguish which witness was used.
+ * A partial-view illustration: edit the candidate hidden share's coordinate 0.
+ * Opened-share bytes remain fixed, but A*candidate generally differs from the
+ * required hidden output. No alternate commitments, Merkle root or accepted
+ * transcript are constructed. Even a kernel edit does not by itself preserve
+ * committed view bytes or establish a zero-knowledge simulation proof.
  */
 function zkSlide(pos: number): void {
   const zk = exhibit2State.zk;
@@ -484,7 +471,7 @@ async function signWithFsState(): Promise<void> {
  *
  * We reuse their secret → witness → (A, b) and their party count N, then run
  * τ = N−1 Fiat-Shamir rounds over that same statement. The learner watches the
- * identical committed views' Merkle roots get hashed with the message into the
+ * fresh signing rounds' Merkle roots get hashed with the message into the
  * challenge, and the same kind of parties they hid by hand get hidden by the
  * hash. Nothing is faked: b is still A·x for THEIR x, and the challenge is the
  * real SHA-256(message ‖ roots).
@@ -623,7 +610,7 @@ function renderFlowBanner(): string {
 function renderZkPanel(): string {
   const zk = exhibit2State.zk;
   if (!zk) {
-    return `<p class="zk-empty">Run Split → MPC → Challenge → Verify, then a zero-knowledge experiment appears here.</p>`;
+    return `<p class="zk-empty">Run Split → MPC → Challenge → Verify, then a partial-view illustration appears here.</p>`;
   }
   const required = `[${zk.requiredOutput.join(', ')}]`;
   const rows = zk.candidates
@@ -666,9 +653,10 @@ function renderZkPanel(): string {
       </table>
     </div>
     <p class="zk-note">
-      So what actually stays hidden? Not the output (it&rsquo;s determined) — the <strong>witness coordinate</strong>.
-      The prover could have held a <em>different</em> secret and produced a <strong>byte-for-byte identical</strong>
-      revealed transcript, just with a different sealed share. Drag below to try every alternative:
+      Which <strong>witness coordinate</strong> is possible depends on the public statement
+      <span class="math">A·x = b</span>. Drag below to edit a candidate hidden share while
+      holding the opened-share bytes fixed. This is a partial-view illustration,
+      not another accepted transcript.
     </p>
     <div class="zk-slider">
       <label for="zk-share-slider">Suppose the prover&rsquo;s secret were different (Δ on coordinate 0):
@@ -688,16 +676,19 @@ function renderZkPanel(): string {
           ${sliderMatches ? '<span class="zk-match">● still hits b</span>' : '<span class="zk-nomatch">● a different b</span>'}
         </p>
         <p class="zk-slider-line zk-slider-fixed">
-          <span class="zk-slider-k">revealed transcript</span>
+          <span class="zk-slider-k">opened-share bytes</span>
           <strong class="zk-fixed-val">unchanged</strong>
-          <span class="zk-slider-note">— the ${exhibit2State.N - 1} opened views never move, so the verifier sees the same bytes for every Δ.</span>
+          <span class="zk-slider-note">— the ${exhibit2State.N - 1} opened shares stay fixed; this does not mean the full verifier transcript is unchanged.</span>
         </p>
       </div>
     </div>
     <p class="zk-note zk-punchline">
-      That is the a-ha of zero-knowledge: revealing <span class="math">N−1</span> views pins the <em>output</em>,
-      never the <em>secret</em>. Every Δ above is a different witness the prover could equally have held, all
-      producing the identical transcript you already accepted.
+      The public statement and original commitments/Merkle root are <strong>not regenerated</strong>.
+      A different hidden output fails the original statement. Only a kernel-direction change
+      preserves <span class="math">A·x = b</span>; even then, edited share bytes generally
+      require different commitments. These candidate edits are not accepted alternative
+      transcripts and are <strong>not a zero-knowledge simulation proof</strong>.
+      The public linear equation can itself determine the witness in this toy model.
     </p>
   `;
 }
@@ -712,7 +703,7 @@ function renderZkPanel(): string {
 function renderThreadedBanner(): string {
   if (!fsThreaded) {
     return `<p class="thread-empty">Tip: in Exhibit 2, click <strong>Sign this round ↓</strong> to carry your exact
-      secret, N, A and b down here and watch the same round become a signature.</p>`;
+      secret, N, A and b down here and watch that statement be signed with fresh committed rounds.</p>`;
   }
   const t = fsThreaded;
   const interactiveHidden =
@@ -721,9 +712,10 @@ function renderThreadedBanner(): string {
   return `
     <div class="thread-banner" role="group" aria-label="One statement threaded from Exhibit 2 into Exhibit 3">
       <p class="thread-title">
-        <strong>Your Exhibit 2 round, now signed.</strong> Same secret <code>${esc(t.secretHex)}</code>,
+        <strong>Your Exhibit 2 statement, now signed.</strong> Same secret <code>${esc(t.secretHex)}</code>,
         same <span class="math">N = ${t.N}</span>, same public <span class="math">b = [${t.b.join(', ')}]</span>.
       </p>
+      <p>Fresh shares, salts and commitments are generated for the signing rounds; the interactive Merkle root is not reused.</p>
       <div class="thread-cols">
         <div class="thread-col">
           <h4>Interactive (Exhibit 2)</h4>
@@ -962,7 +954,7 @@ function render(): void {
           <button id="run-mpc" type="button" aria-label="Run MPC round">Run MPC</button>
           <button id="run-challenge" type="button" aria-label="Select hidden party challenge">Challenge</button>
           <button id="run-verify" type="button" aria-label="Verify revealed party views">Verify</button>
-          <button id="sign-this-round" type="button" aria-label="Turn this exact round into a Fiat-Shamir signature in Exhibit 3">Sign this round ↓</button>
+          <button id="sign-this-round" type="button" aria-label="Sign this round’s statement with fresh Fiat-Shamir rounds in Exhibit 3">Sign this round ↓</button>
         </div>
         <p class="challenge-arrow">⇢ Challenge picks one hidden party · <em>Sign this round</em> carries this exact secret, N, A and b into Exhibit 3</p>
         <div class="party-grid">
@@ -971,7 +963,7 @@ function render(): void {
         <p class="verify-result" role="status" aria-live="polite">${esc(exhibit2State.verificationText)}</p>
 
         <details class="zk-details" ${exhibit2State.zk ? 'open' : ''}>
-          <summary>Can you recover the witness? (zero-knowledge experiment)</summary>
+          <summary>Can you recover the witness? (partial-view illustration)</summary>
           <div class="zk-body">
             ${renderZkPanel()}
           </div>

@@ -107,14 +107,16 @@ describe('Exhibit 2 UI', () => {
     await clickAndSettle('run-mpc');
     await clickAndSettle('run-challenge');
     await clickAndSettle('run-verify');
-    // The ZK panel now honestly shows that the sealed party's OUTPUT is pinned
-    // (b − Σ revealed) while its SHARE is not — only one candidate matches the
-    // required output, and a slider varies the hidden witness while the revealed
-    // transcript stays byte-for-byte identical.
+    // The panel distinguishes fixed opened shares from a complete transcript,
+    // preserves the required-output check, and states its simulator limitation.
     const zk = document.querySelector('.zk-details[open]');
     expect(zk).toBeTruthy();
     expect(zk?.textContent ?? '').toMatch(/required output/i);
     expect(zk?.textContent ?? '').toMatch(/witness coordinate/i);
+    expect(zk?.textContent ?? '').toMatch(/opened-share bytes/i);
+    expect(zk?.textContent ?? '').toMatch(/not regenerated/i);
+    expect(zk?.textContent ?? '').toMatch(/not a zero-knowledge simulation proof/i);
+    expect(zk?.textContent ?? '').not.toMatch(/same bytes for every|identical transcript you already accepted/i);
     // True share row plus two decoys.
     expect(document.querySelectorAll('.zk-body tbody tr').length).toBeGreaterThanOrEqual(3);
     // Exactly one candidate matches the required output (the real share).
