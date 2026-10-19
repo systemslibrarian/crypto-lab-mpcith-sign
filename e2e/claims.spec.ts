@@ -556,3 +556,13 @@ test('toy PERK: pi is a real rearrangement of y into x, and the signature verifi
   );
   expect(parts.reduce((a, b) => a + b, 0)).toBe(total);
 });
+
+test('research note is visible and preserves the attack-model limits', async ({ page }) => {
+  await page.goto('.')
+  const note = page.locator('#vole-leakage-research')
+  await expect(note).toBeVisible()
+  await expect(note.locator('a')).toHaveAttribute('href', 'https://eprint.iacr.org/2026/2519')
+  await expect(note).toContainText('preprint')
+  await expect(note).toContainText('power-leakage observations')
+  await expect(note).toContainText('neither FAEST nor SDitH')
+})

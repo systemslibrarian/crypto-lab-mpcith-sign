@@ -1094,6 +1094,18 @@ Verifier recomputes e and checks consistency</pre>
 
       <section class="panel">
         <h2>Exhibit 5 — Security Diversity</h2>
+        <aside class="callout" id="vole-leakage-research" aria-label="VOLE-in-the-Head implementation research">
+          <strong>Physical leakage is a separate security question — October 18, 2026.</strong>
+          <p><a href="https://eprint.iacr.org/2026/2519" target="_blank" rel="noopener noreferrer">Li et al., DPA-style Attacks on VOLE-in-the-Head Signature Schemes (ePrint 2026/2519)</a>
+            is a preprint received October 17 and revised October 18. The authors report attacks on
+            FAEST and SDitH that use leakage from sensitive VOLE intermediate values to recover the
+            secret witness, enabling forgery. They validate the attacks with simulated leakage and
+            power measurements on three ARM Cortex-M4 devices.</p>
+          <p>The result requires power-leakage observations; it is not a public-key-only mathematical
+            break. This toy PERK-style demo implements neither FAEST nor SDitH and does not reproduce
+            the attacks. Its comparison of mathematical assumptions is not a claim of side-channel resistance.</p>
+        </aside>
+
         <p>
           NIST Round 2 additional signatures include Mirath, PERK, RYDE, SDitH, MQOM, and FAEST.
           None are standardized as of 2026. They are under active cryptanalysis.

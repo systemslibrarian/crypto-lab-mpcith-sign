@@ -85,6 +85,12 @@ while adjusting controls such as party count N and field prime q.
 - Predictable or reused seeds: the all-but-one opening relies on the unopened view's randomness staying hidden; bad RNG or seed reuse can leak the witness.
 - Toy parameters and no constant-time guarantees: this educational code uses small fields and is not side-channel hardened.
 
+### VOLE-in-the-Head power-leakage research — October 18, 2026
+
+[Li et al., *DPA-style Attacks on VOLE-in-the-Head Signature Schemes*, ePrint 2026/2519](https://eprint.iacr.org/2026/2519), received October 17 and revised October 18, is a **preprint with demonstrated, attack-model-conditional results**. The authors report attacks on FAEST and SDitH that recover the secret witness from leakage of sensitive VOLE intermediate values, enabling forgery. Validation uses simulated leakage and power measurements on three ARM Cortex-M4 devices.
+
+This requires power-leakage observations, not just a public key; it does not establish a mathematical break of these schemes. The lab's toy PERK-style construction implements neither FAEST nor SDitH and does not reproduce these attacks. Exhibit 5 links the paper to distinguish mathematical-assumption diversity from implementation resistance to side channels; the result is not generalized to all MPC-in-the-Head signatures.
+
 ## Real-World Usage
 
 - NIST additional-signatures on-ramp: several MPC-in-the-Head submissions (including SDitH, PERK, MIRA, RYDE, MQOM, and the VOLE-in-the-Head scheme FAEST) are candidates in NIST's call for additional post-quantum signatures.
