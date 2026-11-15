@@ -860,7 +860,7 @@ function render(): void {
       </div>
       <aside class="cl-hero-why" aria-label="Why it matters">
         <span class="cl-hero-why-label">WHY IT MATTERS</span>
-        <p class="cl-hero-why-text">Quantum computers will break the signatures securing today's software and identities. MPCitH needs only a hash function, giving a conservative post-quantum fallback that rests on far weaker assumptions than lattice schemes.</p>
+        <p class="cl-hero-why-text">Quantum computers will break the signatures securing today's software and identities. MPCitH builds a signature from a hash function plus one hard problem — syndrome decoding, permuted kernel, MQ — a post-quantum fallback whose assumptions differ from lattice schemes rather than being strictly weaker.</p>
       </aside>
     </header>
 
@@ -1107,8 +1107,10 @@ Verifier recomputes e and checks consistency</pre>
         </aside>
 
         <p>
-          NIST Round 2 additional signatures include Mirath, PERK, RYDE, SDitH, MQOM, and FAEST.
-          None are standardized as of 2026. They are under active cryptanalysis.
+          On May 14, 2026 NIST <a href="https://www.nist.gov/news-events/news/2026/05/nine-candidates-advance-third-round-additional-digital-signatures-pqc" target="_blank" rel="noopener noreferrer">advanced
+          nine additional-signature candidates to Round 3</a>, including SDitH, MQOM, and FAEST; the Round 2
+          MPC-in-the-Head candidates Mirath, PERK, and RYDE did not advance. None are standardized as of 2026.
+          They are under active cryptanalysis.
         </p>
         <div class="table-wrap" tabindex="0" role="region" aria-label="Signature size and security basis by scheme">
           <table>

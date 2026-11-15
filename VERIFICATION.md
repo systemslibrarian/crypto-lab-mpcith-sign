@@ -49,4 +49,4 @@ broken invariant blocks deployment.
 - `npm run build` compiles with zero TypeScript errors (`tsc` then `vite build`).
 - `grep -r "Math.random" src/` returns zero matches — all randomness uses
   `crypto.getRandomValues`.
-- No NIST Round 2 candidate is described as standardized.
+- No NIST additional-signature candidate (Round 2 or Round 3) is described as standardized.

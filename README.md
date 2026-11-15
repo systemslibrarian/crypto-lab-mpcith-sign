@@ -93,7 +93,7 @@ This requires power-leakage observations, not just a public key; it does not est
 
 ## Real-World Usage
 
-- NIST additional-signatures on-ramp: several MPC-in-the-Head submissions (including SDitH, PERK, MIRA, RYDE, MQOM, and the VOLE-in-the-Head scheme FAEST) are candidates in NIST's call for additional post-quantum signatures.
+- NIST additional-signatures on-ramp: several MPC-in-the-Head submissions entered NIST's call for additional post-quantum signatures. On May 14, 2026 NIST advanced nine candidates to Round 3, among them SDitH and MQOM (MPC-in-the-Head) and the VOLE-in-the-Head scheme FAEST; the Round 2 MPCitH candidates PERK, RYDE, and Mirath (listed by NIST as the merger of MIRA/MiRitH) did not advance. None is standardized. Status reviewed November 15, 2026 against the [NIST announcement](https://www.nist.gov/news-events/news/2026/05/nine-candidates-advance-third-round-additional-digital-signatures-pqc) and the [Round 3 candidate list](https://csrc.nist.gov/projects/pqc-dig-sig/round-3-additional-signatures).
 - Picnic: an earlier MPCitH/ZKBoo-based signature that reached the alternate-candidate stage of the original NIST PQC process, demonstrating signatures from symmetric primitives alone.
 - Assumption diversity: MPCitH lets signatures be built from hash/block-cipher hardness, hedging against breaks in structured lattice or code assumptions.
 - Cryptanalysis and research: the family is an active area for analyzing the size/soundness tradeoffs of zero-knowledge-derived signatures.
