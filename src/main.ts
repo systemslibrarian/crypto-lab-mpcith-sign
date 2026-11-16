@@ -1119,7 +1119,7 @@ Verifier recomputes e and checks consistency</pre>
               <tr><th scope="col">Scheme</th><th scope="col">Sig size</th><th scope="col">Security basis</th></tr>
             </thead>
             <tbody>
-              <tr><td>ML-DSA-2</td><td>2,420 B</td><td>Lattice</td></tr>
+              <tr><td>ML-DSA-44</td><td>2,420 B</td><td>Lattice</td></tr>
               <tr><td>SLH-DSA-128s</td><td>7,856 B</td><td>Hash</td></tr>
               <tr><td>PERK-I (est.)</td><td>~6,000 B</td><td>Hash + PKP</td></tr>
               <tr><td>Mirath-I (est.)</td><td>~5,700 B</td><td>Hash + MinRank</td></tr>
