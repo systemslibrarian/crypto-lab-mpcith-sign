@@ -1110,7 +1110,10 @@ Verifier recomputes e and checks consistency</pre>
           On May 14, 2026 NIST <a href="https://www.nist.gov/news-events/news/2026/05/nine-candidates-advance-third-round-additional-digital-signatures-pqc" target="_blank" rel="noopener noreferrer">advanced
           nine additional-signature candidates to Round 3</a>, including SDitH, MQOM, and FAEST; the Round 2
           MPC-in-the-Head candidates Mirath, PERK, and RYDE did not advance. None are standardized as of 2026.
-          They are under active cryptanalysis.
+          They are under active cryptanalysis. The rationale is
+          <a href="https://doi.org/10.6028/NIST.IR.8610" target="_blank" rel="noopener noreferrer">NIST IR 8610</a>,
+          whose Table 3 groups all three of FAEST, MQOM and SDitH under MPC-in-the-Head — FAEST by way of the
+          VOLE-in-the-Head framework.
         </p>
         <div class="table-wrap" tabindex="0" role="region" aria-label="Signature size and security basis by scheme">
           <table>
@@ -1120,7 +1123,7 @@ Verifier recomputes e and checks consistency</pre>
             </thead>
             <tbody>
               <tr><td>ML-DSA-44</td><td>2,420 B</td><td>Lattice</td></tr>
-              <tr><td>SLH-DSA-128s</td><td>7,856 B</td><td>Hash</td></tr>
+              <tr><td>SLH-DSA-SHA2-128s</td><td>7,856 B</td><td>Hash</td></tr>
               <tr><td>PERK-I (est.)</td><td>~6,000 B</td><td>Hash + PKP</td></tr>
               <tr><td>Mirath-I (est.)</td><td>~5,700 B</td><td>Hash + MinRank</td></tr>
               <tr><td>FAEST-I (est.)</td><td>~5,700 B</td><td>Hash + AES</td></tr>
@@ -1130,6 +1133,18 @@ Verifier recomputes e and checks consistency</pre>
         <p>
           Tradeoff: MPCitH signatures are generally larger than ML-DSA, but avoid lattice structure and
           rely on hash commitments plus hard combinatorial statements.
+        </p>
+        <p>
+          <strong>Standards reviewed November 15, 2026:</strong> the two standardized rows are named as
+          their standards name them — ML-DSA-44 from
+          <a href="https://doi.org/10.6028/NIST.FIPS.204" target="_blank" rel="noopener noreferrer">FIPS 204</a>
+          Table 2, SLH-DSA-SHA2-128s from
+          <a href="https://doi.org/10.6028/NIST.FIPS.205" target="_blank" rel="noopener noreferrer">FIPS 205</a>
+          Table 2. FIPS 205 approves no parameter set called "SLH-DSA-128s": every one of its twelve names
+          carries the hash family that instantiates it. SHA2 is named here because FIPS 205 Table 2 gives
+          SLH-DSA-SHA2-128s and SLH-DSA-SHAKE-128s the same 7,856-byte signature, so the size this row quotes
+          cannot by itself say which family it was taken from. The three MPCitH rows stay marked (est.):
+          no standard names those schemes, so there is no standardized parameter-set name to give them.
         </p>
         <p>
           Cross-links: crypto-lab-sphincs-ledger, crypto-lab-dilithium-seal,

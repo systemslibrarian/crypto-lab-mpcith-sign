@@ -9,6 +9,18 @@
 // labelled "ML-DSA-2" — the Dilithium-era habit of naming the NIST security
 // category — which is not a name FIPS 204 uses for anything.
 //
+// FIPS 205 Table 2 approves twelve SLH-DSA parameter sets, and every name
+// carries the hash family that instantiates it: there is no "SLH-DSA-128s". The
+// hash row was labelled that way. Its 7 856-byte signature is the right figure
+// but does not identify a family — Table 2 pairs SLH-DSA-SHA2-128s and
+// SLH-DSA-SHAKE-128s on one row (n=16, h=63, d=7, a=12, k=14, category 1, pk 32
+// bytes, sig 7 856 bytes), so the two families are identical in size and the
+// row carried no family of its own to preserve. SHA2 is therefore named, and the
+// page says so beside the table.
+//
+// The Round 3 status sentence is gated here too: the advancement date and NIST
+// IR 8610, which is where the rationale and the category grouping come from.
+//
 // Kept in its own file rather than added to ui.test.ts so the sequence of
 // mounts in that file is unchanged.
 import { webcrypto } from 'node:crypto';
@@ -42,4 +54,47 @@ it('labels the lattice comparison row with its FIPS 204 parameter-set name', asy
 
   // "ML-DSA-2" is not a FIPS 204 name; "ML-DSA-44" does not contain it.
   expect(document.body.textContent ?? '').not.toContain('ML-DSA-2');
+});
+
+it('labels the hash comparison row with its FIPS 205 parameter-set name', async () => {
+  await import('../src/main.ts');
+  await tick();
+
+  const rows = [...document.querySelectorAll('tbody tr')];
+  const hash = rows.filter((tr) => (tr.querySelector('td')?.textContent ?? '').startsWith('SLH-DSA'));
+  expect(hash).toHaveLength(1);
+
+  const cells = [...hash[0].querySelectorAll('td')].map((td) => td.textContent?.trim());
+  expect(cells[0]).toBe('SLH-DSA-SHA2-128s');
+  expect(cells[1]).toBe('7,856 B');
+
+  // No comparison cell may carry the family-less non-name. The note below the
+  // table quotes it to explain the correction, so the scope is table cells.
+  const cellLabels = [...document.querySelectorAll('td')].map((td) => td.textContent?.trim());
+  expect(cellLabels).not.toContain('SLH-DSA-128s');
+});
+
+it('says why SHA2 is the family named, not SHAKE', async () => {
+  await import('../src/main.ts');
+  await tick();
+
+  const text = (document.body.textContent ?? '').replace(/\s+/g, ' ');
+  expect(text).toContain('FIPS 205 approves no parameter set called "SLH-DSA-128s"');
+  expect(text).toContain('SLH-DSA-SHAKE-128s the same 7,856-byte signature');
+  expect(document.querySelector('a[href="https://doi.org/10.6028/NIST.FIPS.205"]')).toBeTruthy();
+});
+
+it('dates the Round 3 advancement and cites NIST IR 8610 for it', async () => {
+  await import('../src/main.ts');
+  await tick();
+
+  const text = (document.body.textContent ?? '').replace(/\s+/g, ' ');
+  expect(text).toContain('On May 14, 2026');
+  expect(text).toContain('nine additional-signature candidates to Round 3');
+  expect(text).toContain('NIST IR 8610');
+  // The grouping is IR 8610 Table 3's, cited to IR 8610 and to nothing else:
+  // the CSRC round-3 page files FAEST under "Symmetric-based Signatures".
+  expect(text).toContain('Table 3 groups all three of FAEST, MQOM and SDitH under MPC-in-the-Head');
+  expect(text).not.toContain('Symmetric-based Signatures');
+  expect(document.querySelector('a[href="https://doi.org/10.6028/NIST.IR.8610"]')).toBeTruthy();
 });

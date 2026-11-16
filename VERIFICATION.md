@@ -44,6 +44,19 @@ broken invariant blocks deployment.
     experiment listing the true hidden share plus decoys, all equally consistent.
 19. The cheating-prover experiment tallies 100 attempts as caught or slipped.
 
+## Claims about other schemes (`tests/claims.test.ts`, jsdom)
+
+20. The lattice comparison row is FIPS 204 Table 2's `ML-DSA-44` at 2,420 B, and
+    the Dilithium-era non-name `ML-DSA-2` appears nowhere.
+21. The hash comparison row is FIPS 205 Table 2's `SLH-DSA-SHA2-128s` at
+    7,856 B; no comparison cell carries the family-less `SLH-DSA-128s`, which
+    FIPS 205 does not approve as a parameter set.
+22. The page explains why SHA2 is the family named — FIPS 205 Table 2 gives
+    `SLH-DSA-SHA2-128s` and `SLH-DSA-SHAKE-128s` the same 7,856-byte signature —
+    and links FIPS 205.
+23. The Round 3 sentence dates the advancement to May 14, 2026, cites NIST
+    IR 8610, and takes its category grouping from IR 8610 Table 3 alone.
+
 ## Manual / build checks
 
 - `npm run build` compiles with zero TypeScript errors (`tsc` then `vite build`).
