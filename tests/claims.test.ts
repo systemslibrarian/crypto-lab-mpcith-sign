@@ -97,4 +97,8 @@ it('dates the Round 3 advancement and cites NIST IR 8610 for it', async () => {
   expect(text).toContain('Table 3 groups all three of FAEST, MQOM and SDitH under MPC-in-the-Head');
   expect(text).not.toContain('Symmetric-based Signatures');
   expect(document.querySelector('a[href="https://doi.org/10.6028/NIST.IR.8610"]')).toBeTruthy();
+  // The announcement is cited at its CSRC address, the one the rest of the fleet uses.
+  expect(
+    document.querySelector('a[href="https://csrc.nist.gov/News/2026/nist-advances-9-candidates-to-the-3rd-round-of-pqc"]'),
+  ).toBeTruthy();
 });

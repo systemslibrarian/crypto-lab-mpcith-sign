@@ -1107,7 +1107,7 @@ Verifier recomputes e and checks consistency</pre>
         </aside>
 
         <p>
-          On May 14, 2026 NIST <a href="https://www.nist.gov/news-events/news/2026/05/nine-candidates-advance-third-round-additional-digital-signatures-pqc" target="_blank" rel="noopener noreferrer">advanced
+          On May 14, 2026 NIST <a href="https://csrc.nist.gov/News/2026/nist-advances-9-candidates-to-the-3rd-round-of-pqc" target="_blank" rel="noopener noreferrer">advanced
           nine additional-signature candidates to Round 3</a>, including SDitH, MQOM, and FAEST; the Round 2
           MPC-in-the-Head candidates Mirath, PERK, and RYDE did not advance. None are standardized as of 2026.
           They are under active cryptanalysis. The rationale is
