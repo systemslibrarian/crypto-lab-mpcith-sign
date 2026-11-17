@@ -102,3 +102,57 @@ it('dates the Round 3 advancement and cites NIST IR 8610 for it', async () => {
     document.querySelector('a[href="https://csrc.nist.gov/News/2026/nist-advances-9-candidates-to-the-3rd-round-of-pqc"]'),
   ).toBeTruthy();
 });
+
+// The three MPCitH rows used to read "PERK-I (est.) ~6,000 B", "Mirath-I (est.)
+// ~5,700 B" and "FAEST-I (est.) ~5,700 B". None of those figures matches any
+// parameter set the schemes publish, and "(est.)" is not a source. Each row now
+// names a parameter set from the scheme's current specification and quotes that
+// document's own number:
+//   PERK v2.2.0 (20/12/2025) Table 5:      PERK-1-Short    3.48 kB
+//   Mirath v2.1.0 (23/09/2025) Table 8:    Mirath-1a-short 3,182 B
+//   FAEST v3.0 (01/09/2026) Table 9.3:     FAEST-128s      4,066 B
+it('quotes each MPCitH row from that scheme’s own current specification', async () => {
+  await import('../src/main.ts');
+  await tick();
+
+  const rows = [...document.querySelectorAll('tbody tr')];
+  const sigSize = (name: string) => {
+    const row = rows.filter(
+      (tr) => (tr.querySelector('td')?.textContent ?? '').trim() === name,
+    );
+    expect(row).toHaveLength(1);
+    return [...row[0].querySelectorAll('td')].map((td) => td.textContent?.trim());
+  };
+
+  expect(sigSize('PERK-1-Short')[1]).toBe('3.48 kB');
+  expect(sigSize('Mirath-1a-short')[1]).toBe('3,182 B');
+  expect(sigSize('FAEST-128s')[1]).toBe('4,066 B');
+
+  // No estimate may stand in for a published figure anywhere in the table.
+  const cells = [...document.querySelectorAll('td')].map((td) => td.textContent?.trim() ?? '');
+  expect(cells.some((c) => c.includes('(est.)'))).toBe(false);
+  expect(cells.some((c) => c.startsWith('~'))).toBe(false);
+  expect(cells).not.toContain('~6,000 B');
+  expect(cells).not.toContain('~5,700 B');
+});
+
+it('says which specification and which round each MPCitH figure comes from', async () => {
+  await import('../src/main.ts');
+  await tick();
+
+  const text = (document.body.textContent ?? '').replace(/\s+/g, ' ');
+  expect(text).toContain('PERK v2.2.0');
+  expect(text).toContain('Mirath v2.1.0');
+  expect(text).toContain('FAEST v3.0');
+  // FAEST advanced; PERK and Mirath did not, so they are not all one round.
+  expect(text).toContain('FAEST v3.0 is the Round 3 submission');
+  expect(text).toContain('Round 2 page');
+  for (const href of [
+    'https://pqc-perk.org/assets/downloads/perk-v2.2.0.pdf',
+    'https://pqc-mirath.org/assets/downloads/mirath_v2.1.0.pdf',
+    'https://faest.info/faest-spec-v3.0.pdf',
+    'https://csrc.nist.gov/projects/pqc-dig-sig/round-2-additional-signatures',
+  ]) {
+    expect(document.querySelector(`a[href="${href}"]`)).toBeTruthy();
+  }
+});

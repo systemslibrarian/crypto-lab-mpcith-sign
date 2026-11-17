@@ -1124,9 +1124,9 @@ Verifier recomputes e and checks consistency</pre>
             <tbody>
               <tr><td>ML-DSA-44</td><td>2,420 B</td><td>Lattice</td></tr>
               <tr><td>SLH-DSA-SHA2-128s</td><td>7,856 B</td><td>Hash</td></tr>
-              <tr><td>PERK-I (est.)</td><td>~6,000 B</td><td>Hash + PKP</td></tr>
-              <tr><td>Mirath-I (est.)</td><td>~5,700 B</td><td>Hash + MinRank</td></tr>
-              <tr><td>FAEST-I (est.)</td><td>~5,700 B</td><td>Hash + AES</td></tr>
+              <tr><td>PERK-1-Short</td><td>3.48 kB</td><td>Hash + PKP</td></tr>
+              <tr><td>Mirath-1a-short</td><td>3,182 B</td><td>Hash + MinRank</td></tr>
+              <tr><td>FAEST-128s</td><td>4,066 B</td><td>Hash + AES</td></tr>
             </tbody>
           </table>
         </div>
@@ -1143,8 +1143,21 @@ Verifier recomputes e and checks consistency</pre>
           Table 2. FIPS 205 approves no parameter set called "SLH-DSA-128s": every one of its twelve names
           carries the hash family that instantiates it. SHA2 is named here because FIPS 205 Table 2 gives
           SLH-DSA-SHA2-128s and SLH-DSA-SHAKE-128s the same 7,856-byte signature, so the size this row quotes
-          cannot by itself say which family it was taken from. The three MPCitH rows stay marked (est.):
-          no standard names those schemes, so there is no standardized parameter-set name to give them.
+          cannot by itself say which family it was taken from.
+        </p>
+        <p>
+          <strong>Sizes reviewed November 17, 2026:</strong> the three MPCitH rows are no longer estimates.
+          Each names a parameter set from its scheme's own current specification and quotes that document's
+          figure: <a href="https://pqc-perk.org/assets/downloads/perk-v2.2.0.pdf" target="_blank" rel="noopener noreferrer">PERK
+          v2.2.0</a> (December 20, 2025) Table 5 gives PERK-1-Short 3.48 kB;
+          <a href="https://pqc-mirath.org/assets/downloads/mirath_v2.1.0.pdf" target="_blank" rel="noopener noreferrer">Mirath
+          v2.1.0</a> (September 23, 2025) Table 8 gives Mirath-1a-short 3,182 B (the q=2 family, Table 9, is
+          smaller again at 2,990 B); <a href="https://faest.info/faest-spec-v3.0.pdf" target="_blank" rel="noopener noreferrer">FAEST
+          v3.0</a> (September 1, 2026) Table 9.3 gives FAEST-128s 4,066 B, down from 4,506 B in v2. The rounds
+          differ: FAEST v3.0 is the Round 3 submission, while PERK and Mirath remain where
+          <a href="https://csrc.nist.gov/projects/pqc-dig-sig/round-2-additional-signatures" target="_blank" rel="noopener noreferrer">NIST's
+          Round 2 page</a> lists them and did not advance. No standard names any of these schemes, so these are
+          submission-package names, not standardized parameter-set names.
         </p>
         <p>
           Cross-links: crypto-lab-sphincs-ledger, crypto-lab-dilithium-seal,
