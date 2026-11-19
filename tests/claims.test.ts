@@ -156,3 +156,38 @@ it('says which specification and which round each MPCitH figure comes from', asy
     expect(document.querySelector(`a[href="${href}"]`)).toBeTruthy();
   }
 });
+
+// The README has to say what the page says. After the comparison rows were
+// sourced (PERK v2.2.0 Table 5, Mirath v2.1.0 Table 8, FAEST v3.0 Table 9.3)
+// the README went on telling readers that the lab "labels no parameter set by
+// round" and that its "comparison sizes are marked as estimates" -- both false
+// of the page from that commit on. Every figure and name the README quotes is
+// checked here against the table the page actually renders.
+it('the README describes the comparison rows the page renders, not estimates', async () => {
+  const { readFileSync } = await import('node:fs');
+  // Resolved from the working directory: under jsdom import.meta.url is not a file: URL.
+  const readme = readFileSync('README.md', 'utf8');
+  expect(readme).not.toMatch(/marked as estimates/);
+  expect(readme).not.toMatch(/labels no parameter set by round/);
+  expect(readme).not.toContain('(est.)');
+
+  await import('../src/main.ts');
+  await tick();
+  const cells = Array.from(document.querySelectorAll('table td')).map((td) => (td.textContent ?? '').trim());
+  for (const [name, size] of [
+    ['PERK-1-Short', '3.48 kB'],
+    ['Mirath-1a-short', '3,182 B'],
+    ['FAEST-128s', '4,066 B'],
+  ] as const) {
+    // On the page, as adjacent cells of one row ...
+    const at = cells.indexOf(name);
+    expect(at, `${name} is a row on the page`).toBeGreaterThanOrEqual(0);
+    expect(cells[at + 1]).toBe(size);
+    // ... and in the README, as the same pair.
+    expect(readme).toContain(`${name} ${size}`);
+  }
+  for (const spec of ['PERK v2.2.0', 'Mirath v2.1.0', 'FAEST v3.0']) expect(readme).toContain(spec);
+  expect(readme).toMatch(/FAEST v3\.0 is the Round 3 submission/);
+  expect(readme).toMatch(/PERK and Mirath are Round 2 submissions that did not advance/);
+});
+
